@@ -111,6 +111,7 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
 
   if (!detected || !item.text) return null;
 
+  const trimmedText = item.text.trim();
   const shouldTruncate = item.text.length > 200;
   const displayText =
     !isExpanded && shouldTruncate ? item.text.slice(0, 200) + "..." : item.text;
@@ -163,14 +164,14 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
           <div className="item-color-preview">
             <div
               className="color-swatch"
-              style={{ backgroundColor: item.text.trim() }}
+              style={{ backgroundColor: trimmedText }}
             />
             <span className="item-text">{displayText}</span>
           </div>
-        ) : detected.type === "url" && item.text ? (
+        ) : detected.type === "url" ? (
           <a
-            href={item.text.trim()}
-            onClick={(e) => handleURLClick(e, item.text!.trim())}
+            href={trimmedText}
+            onClick={(e) => handleURLClick(e, trimmedText)}
             className="item-link"
           >
             {displayText}
