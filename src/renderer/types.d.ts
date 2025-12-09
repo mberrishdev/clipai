@@ -1,6 +1,8 @@
+import type { ClipboardItem } from "../models/ClipboardItem";
+
 export interface ElectronAPI {
-  getClipboardHistory: () => Promise<string[]>;
-  onClipboardUpdate: (callback: (text: string) => void) => void;
+  getClipboardHistory: () => Promise<ClipboardItem[]>;
+  onClipboardUpdate: (callback: (item: ClipboardItem) => void) => void;
   onNavigate: (callback: (page: string) => void) => void;
   setTransparency: (enabled: boolean) => Promise<void>;
 }
