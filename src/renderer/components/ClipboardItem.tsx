@@ -73,7 +73,7 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
   const handleURLClick = async (e: React.MouseEvent, url: string) => {
     e.preventDefault();
     try {
-      await (window as any).electronAPI.openExternalURL(url);
+      await window.electronAPI.openExternalURL(url);
     } catch (error) {
       console.error("Failed to open URL:", error);
     }
