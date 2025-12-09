@@ -1,12 +1,16 @@
 # clipai
 
-A modern clipboard history manager built with Electron, React, and Bun. Runs in your macOS menu bar with a beautiful transparent UI.
+A modern clipboard history manager built with Electron, React, and Bun. Runs in your system tray (macOS menu bar / Windows taskbar) with a beautiful transparent UI.
 
 ## Features
 
-- **Automatic Clipboard Monitoring** - Captures all clipboard text automatically
+- **Automatic Clipboard Monitoring** - Captures clipboard text and images automatically
+- **Image Support** - Save and preview screenshots and copied images
+- **Smart Content Detection** - Detects JSON, URLs, colors, emails, and base64
+- **Syntax Highlighting** - Beautiful JSON formatting with syntax highlighting
 - **Transparent UI** - Beautiful frosted glass effect (toggleable)
-- **Menu Bar App** - Runs in background, accessible from system tray
+- **System Tray App** - Runs in background, accessible from system tray
+- **Cross-Platform** - Works on macOS and Windows
 - **Settings** - Customize transparency and other options
 - **Fast** - Built with Bun for lightning-fast performance
 - **In-Memory Storage** - Clipboard history stored in memory (clears on restart)
@@ -41,7 +45,7 @@ src/
 ## Prerequisites
 
 - [Bun](https://bun.sh) v1.0 or higher
-- macOS (for menu bar features)
+- macOS or Windows
 
 ## Installation
 
@@ -81,11 +85,23 @@ This creates:
 - `dist/renderer/` - Built React app
 - `dist/main/` - Compiled Electron main process
 
+Package the app:
+
+```bash
+bun run package
+```
+
+Creates platform-specific installers in `release/`:
+- **macOS**: `.dmg` and `.zip` files (Intel x64 and Apple Silicon arm64)
+- **Windows**: `.exe` installer (NSIS) and portable `.exe`
+
 ## Usage
 
-### Menu Bar
+### System Tray
+- **macOS**: Look for the icon in the menu bar (top-right)
+- **Windows**: Look for the icon in the system tray (bottom-right, notification area)
 - Click the tray icon to show/hide the window
-- Right-click for menu options:
+- Right-click (or left-click on Windows) for menu options:
   - **Show Clipboard History** - View all copied items
   - **Settings** - Configure app preferences
   - **Quit** - Exit the application
@@ -94,9 +110,16 @@ This creates:
 - **Window Transparency** - Toggle transparent/opaque background
 
 ### Clipboard History
-- Automatically saves all clipboard text
+- Automatically saves all clipboard text and images
+- Smart detection: JSON, URLs, colors, emails
+- Click URLs to open in default browser
+- Click items to copy back to clipboard
 - Ignores empty or whitespace-only entries
 - Clears when app is restarted
+
+### Logs
+- **macOS**: `~/Library/Logs/clipai/main.log`
+- **Windows**: `%APPDATA%\clipai\logs\main.log`
 
 ## Scripts
 
@@ -108,6 +131,8 @@ This creates:
 - `bun run build:renderer` - Build React app
 - `bun run build:main` - Build main process
 - `bun run build:preload` - Build preload script
+- `bun run package` - Package app for distribution
+- `bun run package:dir` - Package without creating installer (faster for testing)
 
 ## License
 

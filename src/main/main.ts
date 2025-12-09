@@ -81,7 +81,9 @@ async function createWindow() {
 
 function createTray() {
   try {
-    const iconPath = join(__dirname, "../../assets/trayIconTemplate.png");
+    const iconName =
+      process.platform === "darwin" ? "trayIconTemplate.png" : "icon.png";
+    const iconPath = join(__dirname, "../../assets", iconName);
     log.info("Creating tray with icon:", iconPath);
     tray = new Tray(iconPath);
     log.info("Tray created successfully");
