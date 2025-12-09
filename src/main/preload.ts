@@ -1,9 +1,10 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   getClipboardHistory: () => ipcRenderer.invoke("get-clipboard-history"),
-  onClipboardUpdate: (callback: (text: string) => void) => {
-    ipcRenderer.on("clipboard-update", (_event, text) => callback(text));
+  onClipboardUpdate: (callback: (item: ClipboardItem) => void) => {
+    ipcRenderer.on("clipboard-update", (_event, item) => callback(item));
   },
   onNavigate: (callback: (page: string) => void) => {
     ipcRenderer.on("navigate", (_event, page) => callback(page));

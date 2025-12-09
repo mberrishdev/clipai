@@ -1,7 +1,8 @@
 import { clipboard, BrowserWindow } from "electron";
+import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 export class ClipboardManager {
-  private history: string[] = [];
+  private history: ClipboardItem[] = [];
   private lastClipboardText = "";
   private intervalId: NodeJS.Timeout | null = null;
   private window: BrowserWindow | null = null;
@@ -17,10 +18,14 @@ export class ClipboardManager {
 
       if (trimmedText && text !== this.lastClipboardText) {
         this.lastClipboardText = text;
-        this.history.unshift(text);
+        const item: ClipboardItem = {
+          text,
+          timestamp: Date.now(),
+        };
+        this.history.unshift(item);
 
         if (this.window) {
-          this.window.webContents.send("clipboard-update", text);
+          this.window.webContents.send("clipboard-update", item);
         }
       }
     }, 500);
@@ -33,7 +38,7 @@ export class ClipboardManager {
     }
   }
 
-  getHistory(): string[] {
+  getHistory(): ClipboardItem[] {
     return this.history;
   }
 
