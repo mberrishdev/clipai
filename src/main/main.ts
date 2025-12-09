@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu, clipboard } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { ClipboardManager } from "./clipboardManager.ts";
