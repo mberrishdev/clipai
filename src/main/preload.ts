@@ -13,4 +13,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("set-transparency", enabled),
   openExternalURL: (url: string) =>
     ipcRenderer.invoke("open-external-url", url),
+  getConfig: () => ipcRenderer.invoke("get-config"),
+  setGlobalShortcut: (shortcut: string) =>
+    ipcRenderer.invoke("set-global-shortcut", shortcut),
 });
