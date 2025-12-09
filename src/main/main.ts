@@ -150,6 +150,10 @@ app.whenReady().then(() => {
   log.info("isPackaged:", app.isPackaged);
   log.info("__dirname:", __dirname);
 
+  app.setLoginItemSettings({
+    openAtLogin: true,
+  });
+
   if (app.dock) {
     log.info("Hiding dock icon");
     app.dock.hide();
