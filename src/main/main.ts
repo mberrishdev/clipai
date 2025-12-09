@@ -146,10 +146,16 @@ ipcMain.handle("set-transparency", (_event, enabled: boolean) => {
 });
 
 ipcMain.handle("copy-to-clipboard", (_event, text: string) => {
-  clipboard.writeText(text);
-  log.info("Text copied to clipboard");
-  // Auto-hide window after copy
-  win?.hide();
+  try {
+    clipboard.writeText(text);
+    log.info("Text copied to clipboard");
+    // Auto-hide window after copy
+    win?.hide();
+    return { success: true };
+  } catch (error) {
+    log.error("Failed to copy to clipboard:", error);
+    return { success: false, error: String(error) };
+  }
 });
 
 app.whenReady().then(() => {

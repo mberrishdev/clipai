@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ClipboardItem } from "../../models/ClipboardItem";
 import "./ClipboardHistory.css";
 
@@ -24,6 +24,7 @@ function formatTimestamp(timestamp: number): string {
 export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [history, setHistory] = useState<ClipboardItem[]>([]);
   const [showToast, setShowToast] = useState(false);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     window.electronAPI.getClipboardHistory().then(setHistory);
@@ -31,12 +32,25 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
     window.electronAPI.onClipboardUpdate((item) => {
       setHistory((prev) => [item, ...prev]);
     });
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
   }, []);
 
   const handleCopyToClipboard = async (text: string) => {
     await window.electronAPI.copyToClipboard(text);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+    
+    // Clear any existing timeout
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    
+    toastTimeoutRef.current = setTimeout(() => setShowToast(false), 2000);
   };
 
   return (
