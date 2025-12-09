@@ -4,12 +4,12 @@ A modern clipboard history manager built with Electron, React, and Bun. Runs in 
 
 ## Features
 
-- 📋 **Automatic Clipboard Monitoring** - Captures all clipboard text automatically
-- 🌫️ **Transparent UI** - Beautiful frosted glass effect (toggleable)
-- 🎯 **Menu Bar App** - Runs in background, accessible from system tray
-- ⚙️ **Settings** - Customize transparency and other options
-- 🚀 **Fast** - Built with Bun for lightning-fast performance
-- 💾 **In-Memory Storage** - Clipboard history stored in memory (clears on restart)
+- **Automatic Clipboard Monitoring** - Captures all clipboard text automatically
+- **Transparent UI** - Beautiful frosted glass effect (toggleable)
+- **Menu Bar App** - Runs in background, accessible from system tray
+- **Settings** - Customize transparency and other options
+- **Fast** - Built with Bun for lightning-fast performance
+- **In-Memory Storage** - Clipboard history stored in memory (clears on restart)
 
 ## Tech Stack
 
