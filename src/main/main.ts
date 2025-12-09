@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Tray, Menu, shell } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { ClipboardManager } from "./clipboardManager.ts";
@@ -155,6 +155,15 @@ ipcMain.handle("set-transparency", (_event, enabled: boolean) => {
     // Note: Changing transparency dynamically requires recreating the window
     // For now, we'll just update the CSS class
     win.webContents.send("transparency-changed", enabled);
+  }
+});
+
+ipcMain.handle("open-external-url", async (_event, url: string) => {
+  try {
+    await shell.openExternal(url);
+  } catch (error) {
+    log.error("Failed to open external URL:", error);
+    throw error;
   }
 });
 

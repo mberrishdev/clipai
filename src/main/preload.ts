@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   setTransparency: (enabled: boolean) =>
     ipcRenderer.invoke("set-transparency", enabled),
+  openExternalURL: (url: string) =>
+    ipcRenderer.invoke("open-external-url", url),
 });
