@@ -1,111 +1,116 @@
----
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
-globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
-alwaysApply: false
----
+# CLAUDE.md
 
-Default to using Bun instead of Node.js.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Bun automatically loads .env, so don't use dotenv.
+## Project Overview
 
-## APIs
+clipai is a macOS clipboard history manager built as an Electron app. It runs as a menu bar (system tray) application that monitors clipboard changes and displays them in a React-based UI.
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Architecture
 
-## Testing
+### Three-Process Model
+This is a standard Electron app with three distinct processes:
 
-Use `bun test` to run tests.
+1. **Main Process** (`src/main/main.ts`)
+   - Manages Electron lifecycle, window creation, and system tray
+   - Owns the ClipboardManager instance
+   - Handles IPC communication from renderer
+   - Cannot access DOM or React
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+2. **Preload Script** (`src/main/preload.ts`)
+   - Bridges main and renderer processes securely via `contextBridge`
+   - Exposes safe IPC methods to renderer as `window.electronAPI`
+   - Must be compiled to CommonJS before Electron can load it
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+3. **Renderer Process** (`src/renderer/`)
+   - React app running in Electron's BrowserWindow
+   - Uses IPC to communicate with main process
+   - No direct access to Node.js or Electron APIs (security)
+
+### Key Components
+
+**ClipboardManager** (`src/main/clipboardManager.ts`)
+- Polls system clipboard every 500ms using Electron's `clipboard` API
+- Stores history in memory (clears on app restart)
+- Filters out empty/whitespace-only entries
+- Sends updates to renderer via IPC
+
+**Routing** (`src/renderer/App.tsx`)
+- Simple page-based routing (no react-router)
+- Two pages: ClipboardHistory and Settings
+- Navigation triggered via IPC from tray menu or UI buttons
+
+**Transparency System**
+- Window created with `transparent: true` and `frame: false`
+- CSS classes (`transparent`/`opaque`) toggle background opacity
+- Cannot change window transparency dynamically without recreating window
+
+## Development Commands
+
+### Run Development Server
+```bash
+bun run dev
+```
+This runs three processes concurrently:
+- Vite dev server for renderer (React UI) on http://localhost:5173
+- Preload script builder in watch mode
+- Electron app pointing to dev server
+
+### Build for Production
+```bash
+bun run build
+```
+Creates:
+- `dist/renderer/` - Built React app
+- `dist/main/` - Compiled main process
+- `src/main/preload.js` - Compiled preload (during dev)
+
+### Individual Build Commands
+```bash
+bun run build:renderer  # Vite build
+bun run build:main      # Bun build main.ts
+bun run build:preload   # Bun build preload.ts
 ```
 
-## Frontend
+## Important Constraints
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-
-// import .css files directly and it works
-import './index.css';
-
-import { createRoot } from "react-dom/client";
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
+### Preload Script Compilation
+The preload script MUST be compiled to CommonJS before Electron can load it. This happens via `scripts/build-preload.ts` which uses Bun's builder with:
+```typescript
+{
+  format: 'cjs',
+  external: ['electron'],  // Critical: don't bundle Electron
 }
-
-root.render(<Frontend />);
 ```
 
-Then, run index.ts
+### ES Modules in Electron Main Process
+Since `package.json` has `"type": "module"`, the main process uses ESM:
+- Use `import.meta.url` instead of `__dirname`
+- Import statements must include `.ts` extension: `import { X } from './file.ts'`
+- No `require()` available
 
-```sh
-bun --hot ./index.ts
-```
+### IPC Communication Pattern
+Main → Renderer: `win.webContents.send('event-name', data)`
+Renderer → Main: `ipcRenderer.invoke('handler-name', data)`
 
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.md`.
+All IPC must go through preload script's `contextBridge.exposeInMainWorld()`.
+
+### Vite Configuration
+Vite is configured with `root: './src/renderer'`, so all renderer files must be in that directory. Build output goes to `dist/renderer/`.
+
+## Bun Usage
+
+Default to using Bun instead of Node.js:
+- `bun install` instead of `npm install`
+- `bun run <script>` instead of `npm run <script>`
+- ES modules are the default (`"type": "module"` in package.json)
+- No need for dotenv - Bun automatically loads .env files
+
+## Window Management
+
+The app is designed as a menu bar utility:
+- Window hidden by default (`show: false`)
+- Closing window hides it instead of quitting (`event.preventDefault()`)
+- App only quits when user selects "Quit" from tray menu
+- `isQuitting` flag prevents hide-on-close when actually quitting
+- me
