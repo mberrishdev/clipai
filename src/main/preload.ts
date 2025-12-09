@@ -11,4 +11,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
   setTransparency: (enabled: boolean) =>
     ipcRenderer.invoke("set-transparency", enabled),
+  copyToClipboard: (text: string) =>
+    ipcRenderer.invoke("copy-to-clipboard", text),
 });

@@ -145,6 +145,13 @@ ipcMain.handle("set-transparency", (_event, enabled: boolean) => {
   }
 });
 
+ipcMain.handle("copy-to-clipboard", (_event, text: string) => {
+  clipboard.writeText(text);
+  log.info("Text copied to clipboard");
+  // Auto-hide window after copy
+  win?.hide();
+});
+
 app.whenReady().then(() => {
   log.info("App ready");
   log.info("isPackaged:", app.isPackaged);

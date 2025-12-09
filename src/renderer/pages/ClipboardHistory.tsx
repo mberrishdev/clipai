@@ -23,6 +23,7 @@ function formatTimestamp(timestamp: number): string {
 
 export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [history, setHistory] = useState<ClipboardItem[]>([]);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     window.electronAPI.getClipboardHistory().then(setHistory);
@@ -31,6 +32,12 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
       setHistory((prev) => [item, ...prev]);
     });
   }, []);
+
+  const handleCopyToClipboard = async (text: string) => {
+    await window.electronAPI.copyToClipboard(text);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
 
   return (
     <>
@@ -68,11 +75,51 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
                       {formatTimestamp(item.timestamp)}
                     </div>
                   </div>
+                  <button
+                    className="copy-btn"
+                    onClick={() => handleCopyToClipboard(item.text)}
+                    title="Copy to clipboard"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M5.5 2C5.5 1.17157 6.17157 0.5 7 0.5H12C12.8284 0.5 13.5 1.17157 13.5 2V10C13.5 10.8284 12.8284 11.5 12 11.5H11.5V13C11.5 13.8284 10.8284 14.5 10 14.5H4C3.17157 14.5 2.5 13.8284 2.5 13V5C2.5 4.17157 3.17157 3.5 4 3.5H5.5V2Z"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        fill="none"
+                      />
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </main>
+        {showToast && (
+          <div className="toast">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M13.5 4L6 11.5L2.5 8"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Copied to clipboard!
+          </div>
+        )}
       </div>
     </>
   );
