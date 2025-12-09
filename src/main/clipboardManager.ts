@@ -1,9 +1,10 @@
-import { clipboard, BrowserWindow } from "electron";
+import { clipboard, BrowserWindow, nativeImage } from "electron";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 export class ClipboardManager {
   private history: ClipboardItem[] = [];
   private lastClipboardText = "";
+  private lastClipboardImage = "";
   private intervalId: NodeJS.Timeout | null = null;
   private window: BrowserWindow | null = null;
 
@@ -13,19 +14,40 @@ export class ClipboardManager {
 
   start() {
     this.intervalId = setInterval(() => {
-      const text = clipboard.readText();
-      const trimmedText = text.trim();
+      const image = clipboard.readImage();
 
-      if (trimmedText && text !== this.lastClipboardText) {
-        this.lastClipboardText = text;
-        const item: ClipboardItem = {
-          text,
-          timestamp: Date.now(),
-        };
-        this.history.unshift(item);
+      if (!image.isEmpty()) {
+        const imageDataURL = image.toDataURL();
 
-        if (this.window) {
-          this.window.webContents.send("clipboard-update", item);
+        if (imageDataURL !== this.lastClipboardImage) {
+          this.lastClipboardImage = imageDataURL;
+          const item: ClipboardItem = {
+            type: 'image',
+            image: imageDataURL,
+            timestamp: Date.now(),
+          };
+          this.history.unshift(item);
+
+          if (this.window) {
+            this.window.webContents.send("clipboard-update", item);
+          }
+        }
+      } else {
+        const text = clipboard.readText();
+        const trimmedText = text.trim();
+
+        if (trimmedText && text !== this.lastClipboardText) {
+          this.lastClipboardText = text;
+          const item: ClipboardItem = {
+            type: 'text',
+            text,
+            timestamp: Date.now(),
+          };
+          this.history.unshift(item);
+
+          if (this.window) {
+            this.window.webContents.send("clipboard-update", item);
+          }
         }
       }
     }, 500);

@@ -1,4 +1,6 @@
 export interface ClipboardItem {
-  text: string;
+  type: 'text' | 'image';
+  text?: string;
+  image?: string;
   timestamp: number;
 }

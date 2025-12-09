@@ -1,28 +1,14 @@
 import { useState, useEffect } from "react";
-import type { ClipboardItem } from "../../models/ClipboardItem";
+import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
+import HistoryItemCard from "../components/ClipboardItem";
 import "./ClipboardHistory.css";
 
 interface ClipboardHistoryProps {
   onSettingsClick: () => void;
 }
 
-function formatTimestamp(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (seconds < 60) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return new Date(timestamp).toLocaleDateString();
-}
-
 export default function ClipboardHistory({}: ClipboardHistoryProps) {
-  const [history, setHistory] = useState<ClipboardItem[]>([]);
+  const [history, setHistory] = useState<ClipboardItemType[]>([]);
 
   useEffect(() => {
     window.electronAPI.getClipboardHistory().then(setHistory);
@@ -60,15 +46,11 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
           ) : (
             <div className="history-list">
               {history.map((item, index) => (
-                <div key={index} className="history-item">
-                  <div className="item-number">{index + 1}</div>
-                  <div className="item-content">
-                    <div className="item-text">{item.text}</div>
-                    <div className="item-timestamp">
-                      {formatTimestamp(item.timestamp)}
-                    </div>
-                  </div>
-                </div>
+                <HistoryItemCard
+                  key={index}
+                  item={item}
+                  index={index}
+                />
               ))}
             </div>
           )}

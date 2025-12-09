@@ -32,6 +32,18 @@ async function createWindow() {
     },
   });
 
+  // Set CSP to allow data URLs for images
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self' 'unsafe-inline' data: blob:; img-src 'self' data: blob:;",
+        ],
+      },
+    });
+  });
+
   log.info("Window created");
 
   win.on("close", (event) => {
@@ -51,6 +63,7 @@ async function createWindow() {
     if (!app.isPackaged) {
       log.info("Loading dev URL: http://localhost:5173");
       await win.loadURL("http://localhost:5173");
+      //win.webContents.openDevTools();
     } else {
       const htmlPath = join(__dirname, "../renderer/index.html");
       log.info("Loading file:", htmlPath);
