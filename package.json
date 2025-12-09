@@ -1,6 +1,9 @@
 {
   "name": "clipai",
-  "main": "src/main/main.ts",
+  "version": "0.0.1",
+  "description": "Modern clipboard history manager for macOS",
+  "author": "Mikheil Berishvili",
+  "main": "dist/main/main.js",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -8,16 +11,47 @@
     "dev": "concurrently \"bun run dev:renderer\" \"bun run dev:electron\"",
     "dev:renderer": "vite",
     "dev:preload": "bun run scripts/build-preload.ts",
-    "dev:electron": "bun run dev:preload && wait-on http://localhost:5173 src/main/preload.js && electron .",
+    "dev:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron",
+    "dev:electron": "bun run dev:preload && bun run dev:main && wait-on http://localhost:5173 && electron .",
     "build": "bun run build:renderer && bun run build:main && bun run build:preload",
     "build:renderer": "vite build",
-    "build:main": "bun build src/main/main.ts --outdir dist/main --target node",
-    "build:preload": "bun run scripts/build-preload.ts"
+    "build:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron",
+    "build:preload": "bun build src/main/preload.ts --outdir dist/main --target node --format cjs --external electron",
+    "package": "bun run build && electron-builder",
+    "package:dir": "bun run build && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.clipai.app",
+    "productName": "clipai 0.0.1",
+    "files": [
+      "dist/**/*",
+      "assets/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "assets/icon.png"
+    }
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"
@@ -25,7 +59,7 @@
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.2",
     "concurrently": "^9.2.1",
-    "electron": "^39.2.6",
+    "electron-log": "^5.4.3",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "vite": "^7.2.7",

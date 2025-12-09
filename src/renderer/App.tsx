@@ -4,7 +4,7 @@ import Settings from './pages/Settings';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'history' | 'settings'>('history');
-  const [isTransparent, setIsTransparent] = useState(true);
+  const [isTransparent, setIsTransparent] = useState(false);
 
   useEffect(() => {
     window.electronAPI.onNavigate((page) => {

@@ -37,3 +37,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Compiled preload script
 src/main/preload.js
+
+# electron-builder output
+release/

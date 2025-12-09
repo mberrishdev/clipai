@@ -1,8 +1,8 @@
-import { clipboard, BrowserWindow } from 'electron';
+import { clipboard, BrowserWindow } from "electron";
 
 export class ClipboardManager {
   private history: string[] = [];
-  private lastClipboardText = '';
+  private lastClipboardText = "";
   private intervalId: NodeJS.Timeout | null = null;
   private window: BrowserWindow | null = null;
 
@@ -20,7 +20,7 @@ export class ClipboardManager {
         this.history.unshift(text);
 
         if (this.window) {
-          this.window.webContents.send('clipboard-update', text);
+          this.window.webContents.send("clipboard-update", text);
         }
       }
     }, 500);
