@@ -1,0 +1,34 @@
+{
+  "name": "clipai",
+  "main": "src/main/main.ts",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"bun run dev:renderer\" \"bun run dev:electron\"",
+    "dev:renderer": "vite",
+    "dev:preload": "bun run scripts/build-preload.ts",
+    "dev:electron": "bun run dev:preload && wait-on http://localhost:5173 src/main/preload.js && electron .",
+    "build": "bun run build:renderer && bun run build:main && bun run build:preload",
+    "build:renderer": "vite build",
+    "build:main": "bun build src/main/main.ts --outdir dist/main --target node",
+    "build:preload": "bun run scripts/build-preload.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.2",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.6",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "vite": "^7.2.7",
+    "wait-on": "^9.0.3"
+  }
+}
