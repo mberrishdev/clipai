@@ -5,6 +5,7 @@ export interface ElectronAPI {
   onClipboardUpdate: (callback: (item: ClipboardItem) => void) => void;
   onNavigate: (callback: (page: string) => void) => void;
   setTransparency: (enabled: boolean) => Promise<void>;
+  openExternalURL: (url: string) => Promise<void>;
 }
 
 declare global {

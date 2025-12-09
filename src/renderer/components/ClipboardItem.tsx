@@ -70,6 +70,15 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
     }
   };
 
+  const handleURLClick = async (e: React.MouseEvent, url: string) => {
+    e.preventDefault();
+    try {
+      await window.electronAPI.openExternalURL(url);
+    } catch (error) {
+      console.error("Failed to open URL:", error);
+    }
+  };
+
   if (item.type === "image") {
     return (
       <div className="history-item">
@@ -102,6 +111,7 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
 
   if (!detected || !item.text) return null;
 
+  const trimmedText = item.text.trim();
   const shouldTruncate = item.text.length > 200;
   const displayText =
     !isExpanded && shouldTruncate ? item.text.slice(0, 200) + "..." : item.text;
@@ -154,15 +164,14 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
           <div className="item-color-preview">
             <div
               className="color-swatch"
-              style={{ backgroundColor: item.text.trim() }}
+              style={{ backgroundColor: trimmedText }}
             />
             <span className="item-text">{displayText}</span>
           </div>
         ) : detected.type === "url" ? (
           <a
-            href={item.text.trim()}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={trimmedText}
+            onClick={(e) => handleURLClick(e, trimmedText)}
             className="item-link"
           >
             {displayText}
