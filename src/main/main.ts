@@ -1,7 +1,16 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Tray,
+  Menu,
+  shell,
+  globalShortcut,
+} from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { ClipboardManager } from "./clipboardManager.ts";
+import { ConfigManager } from "./configManager.ts";
 import log from "electron-log";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -12,11 +21,10 @@ log.info("App starting...");
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let clipboardManager: ClipboardManager | null = null;
+let configManager: ConfigManager | null = null;
 let isQuitting = false;
 
 async function createWindow() {
-  log.info("Creating window...");
-
   win = new BrowserWindow({
     width: 900,
     height: 600,
@@ -169,10 +177,61 @@ ipcMain.handle("open-external-url", async (_event, url: string) => {
   }
 });
 
+ipcMain.handle("get-config", () => {
+  return (
+    configManager?.getConfig() || {
+      globalShortcut: "CommandOrControl+Shift+V",
+      transparency: true,
+    }
+  );
+});
+
+ipcMain.handle("set-global-shortcut", (_event, shortcut: string) => {
+  try {
+    const success = registerGlobalShortcut(shortcut);
+    if (success) {
+      configManager?.setGlobalShortcut(shortcut);
+      return { success: true };
+    } else {
+      return { success: false, error: "Failed to register shortcut" };
+    }
+  } catch (error) {
+    log.error("Failed to set global shortcut:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
+  // Unregister all shortcuts first
+  globalShortcut.unregisterAll();
+
+  const registered = globalShortcut.register(shortcut, () => {
+    log.info("Global shortcut triggered:", shortcut);
+    if (win) {
+      if (win.isVisible()) {
+        win.hide();
+      } else {
+        win.show();
+        win.focus();
+      }
+    }
+  });
+
+  if (registered) {
+    log.info("Global shortcut registered:", shortcut);
+  } else {
+    log.error("Failed to register global shortcut:", shortcut);
+  }
+
+  return registered;
+}
+
 app.whenReady().then(() => {
   log.info("App ready");
   log.info("isPackaged:", app.isPackaged);
   log.info("__dirname:", __dirname);
+
+  configManager = new ConfigManager();
 
   app.setLoginItemSettings({
     openAtLogin: true,
@@ -186,6 +245,9 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
 
+  const config = configManager.getConfig();
+  registerGlobalShortcut(config.globalShortcut);
+
   if (!app.isPackaged) {
     log.info("Dev mode: showing window");
     win?.show();
@@ -196,4 +258,9 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   // Prevent app from quitting
+});
+
+app.on("will-quit", () => {
+  // Unregister all shortcuts when app quits
+  globalShortcut.unregisterAll();
 });
