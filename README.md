@@ -1,6 +1,12 @@
 # clipai
 
+[![Release](https://img.shields.io/github/v/release/mberrishdev/clipai)](https://github.com/mberrishdev/clipai/releases)
+[![Issues](https://img.shields.io/github/issues/mberrishdev/clipai)](https://github.com/mberrishdev/clipai/issues)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 A modern clipboard history manager built with Electron, React, and Bun. Runs in your system tray (macOS menu bar / Windows taskbar) with a beautiful transparent UI.
+
+![clipai screenshot](assets/screen1.png)
 
 ## Features
 
