@@ -33,6 +33,8 @@ async function createWindow() {
     resizable: false,
     frame: false,
     hasShadow: false,
+    vibrancy: "fullscreen-ui",
+    backgroundMaterial: "acrylic",
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -40,7 +42,6 @@ async function createWindow() {
     },
   });
 
-  // Set CSP to allow data URLs for images
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
