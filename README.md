@@ -121,11 +121,32 @@ Creates platform-specific installers in `release/`:
 - Click URLs to open in default browser
 - Click items to copy back to clipboard
 - Ignores empty or whitespace-only entries
-- Clears when app is restarted
+- Persistent storage using SQLite database
+- Load more history with pagination
 
-### Logs
-- **macOS**: `~/Library/Logs/clipai/main.log`
-- **Windows**: `%APPDATA%\clipai\logs\main.log`
+## Logs
+
+**macOS:**
+```bash
+~/Library/Logs/clipai/main.log
+
+# Open in default editor
+open ~/Library/Logs/clipai/main.log
+
+# Tail logs in real-time
+tail -f ~/Library/Logs/clipai/main.log
+```
+
+**Windows:**
+```bash
+%USERPROFILE%\AppData\Roaming\clipai\logs\main.log
+
+# Open logs folder
+explorer %APPDATA%\clipai\logs
+
+# View in terminal
+type %APPDATA%\clipai\logs\main.log
+```
 
 ## Scripts
 
