@@ -16,8 +16,18 @@ import log from "electron-log";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Configure electron-log
+log.initialize({ preload: true });
 log.transports.file.level = "info";
+log.transports.console.level = "info";
+log.transports.file.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}";
+
+log.info("=".repeat(80));
 log.info("App starting...");
+log.info("Platform:", process.platform);
+log.info("App version:", app.getVersion());
+log.info("Electron version:", process.versions.electron);
+log.info("=".repeat(80));
 
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -55,39 +65,31 @@ async function createWindow() {
     });
   });
 
-  log.info("Window created");
-
   win.on("close", (event) => {
     if (!isQuitting) {
-      log.info("Window close prevented, hiding instead");
       event.preventDefault();
       win?.hide();
     }
   });
 
   win.on("blur", () => {
-    log.info("Window lost focus, hiding");
     win?.hide();
   });
 
   try {
     if (!app.isPackaged) {
-      log.info("Loading dev URL: http://localhost:5173");
       await win.loadURL("http://localhost:5173");
       //win.webContents.openDevTools();
     } else {
       const htmlPath = join(__dirname, "../renderer/index.html");
-      log.info("Loading file:", htmlPath);
       await win.loadFile(htmlPath);
     }
-    log.info("Content loaded successfully");
   } catch (error) {
     log.error("Failed to load content:", error);
   }
 
   clipboardManager = new ClipboardManager(win, databaseManager!);
   clipboardManager.start();
-  log.info("ClipboardManager started");
 }
 
 function createTray() {
@@ -95,23 +97,16 @@ function createTray() {
     const iconName =
       process.platform === "darwin" ? "trayIconTemplate.png" : "icon.png";
     const iconPath = join(__dirname, "../../assets", iconName);
-    log.info("Creating tray with icon:", iconPath);
     tray = new Tray(iconPath);
-    log.info("Tray created successfully");
 
     const contextMenu = Menu.buildFromTemplate([
       {
         label: "Show Clipboard History",
         click: () => {
-          log.info("=== MENU: Show Clipboard History clicked ===");
-          log.info("Window exists:", !!win);
-          log.info("Window visible before:", win?.isVisible());
           try {
             win?.show();
             win?.focus();
-            log.info("Window visible after:", win?.isVisible());
             win?.webContents.send("navigate", "history");
-            log.info("Navigate event sent");
           } catch (error) {
             log.error("Error in menu click:", error);
           }
@@ -120,7 +115,6 @@ function createTray() {
       {
         label: "Settings",
         click: () => {
-          log.info("Menu: Settings clicked");
           win?.show();
           win?.webContents.send("navigate", "settings");
         },
@@ -129,7 +123,6 @@ function createTray() {
       {
         label: "Quit",
         click: () => {
-          log.info("Menu: Quit clicked");
           isQuitting = true;
           app.quit();
         },
@@ -137,10 +130,8 @@ function createTray() {
     ]);
 
     tray.setToolTip("Clipboard Manager");
-    log.info("Tray menu configured");
 
     tray.on("click", () => {
-      log.info("Left-click: toggling window");
       const isVisible = win?.isVisible();
       if (isVisible) {
         win?.hide();
@@ -151,7 +142,6 @@ function createTray() {
     });
 
     tray.on("right-click", () => {
-      log.info("Right-click: showing menu");
       tray?.popUpContextMenu(contextMenu);
     });
   } catch (error) {
@@ -232,11 +222,8 @@ function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
 
 app.whenReady().then(() => {
   log.info("App ready");
-  log.info("isPackaged:", app.isPackaged);
-  log.info("__dirname:", __dirname);
 
   databaseManager = new DatabaseManager();
-
   configManager = new ConfigManager();
 
   app.setLoginItemSettings({
@@ -244,7 +231,6 @@ app.whenReady().then(() => {
   });
 
   if (app.dock) {
-    log.info("Hiding dock icon");
     app.dock.hide();
   }
 
@@ -255,11 +241,8 @@ app.whenReady().then(() => {
   registerGlobalShortcut(config.globalShortcut);
 
   if (!app.isPackaged) {
-    log.info("Dev mode: showing window");
     win?.show();
   }
-
-  log.info("Log file location:", log.transports.file.getFile().path);
 });
 
 app.on("window-all-closed", () => {});

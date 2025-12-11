@@ -36,16 +36,22 @@ src/
 ├── main/
 │   ├── main.ts              # Electron main process
 │   ├── preload.ts           # Preload script (IPC bridge)
-│   └── clipboardManager.ts  # Clipboard monitoring logic
-└── renderer/
-    ├── pages/
-    │   ├── ClipboardHistory.tsx  # Main clipboard history view
-    │   ├── ClipboardHistory.css
-    │   ├── Settings.tsx          # Settings page
-    │   └── Settings.css
-    ├── main.tsx             # React entry point
-    ├── App.tsx              # Main app component with routing
-    └── types.d.ts           # TypeScript definitions
+│   ├── clipboardManager.ts  # Clipboard monitoring logic
+│   ├── database.ts          # SQLite database manager
+│   └── configManager.ts     # App configuration management
+├── renderer/
+│   ├── pages/
+│   │   ├── ClipboardHistory.tsx  # Main clipboard history view
+│   │   ├── ClipboardHistory.css
+│   │   ├── Settings.tsx          # Settings page
+│   │   └── Settings.css
+│   ├── components/
+│   │   └── ClipboardItem.tsx     # Individual clipboard item component
+│   ├── main.tsx             # React entry point
+│   ├── App.tsx              # Main app component with routing
+│   └── types.d.ts           # TypeScript definitions
+└── models/
+    └── ClipboardItem.ts     # Data models and interfaces
 ```
 
 ## Prerequisites
@@ -55,9 +61,38 @@ src/
 
 ## Installation
 
+### From Release (Recommended)
+
+Download the latest release from the [Releases page](https://github.com/mberrishdev/clipai/releases).
+
+**macOS Users:**
+
+1. Download the `.dmg` file (choose `arm64` for Apple Silicon or `x64` for Intel Macs)
+2. Open the `.dmg` file
+3. Drag clipai to your Applications folder
+4. On first launch, you may see "clipai cannot be opened because it is from an unidentified developer"
+   - Right-click (or Control-click) on clipai in Applications
+   - Click "Open"
+   - Click "Open" again in the dialog
+   - This only needs to be done once
+
+**Windows Users:**
+
+You may see a Windows SmartScreen warning because the app is not code-signed. This is normal for open-source apps. To install:
+
+1. Download the `.exe` installer
+2. Run the installer
+3. If you see a SmartScreen warning:
+   - Click "More info"
+   - Click "Run anyway"
+
+**Note:** These warnings appear because the app doesn't have a commercial code signing certificate ($300-400/year). The app is completely safe and open-source.
+
+### From Source
+
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/clipai.git
+git clone https://github.com/mberrishdev/clipai.git
 cd clipai
 ```
 
@@ -138,15 +173,23 @@ tail -f ~/Library/Logs/clipai/main.log
 ```
 
 **Windows:**
-```bash
-%USERPROFILE%\AppData\Roaming\clipai\logs\main.log
+```
+C:\Users\<YourUsername>\AppData\Roaming\clipai\logs\main.log
+```
 
-# Open logs folder
+To open the logs folder:
+```cmd
+# Open in File Explorer
 explorer %APPDATA%\clipai\logs
 
-# View in terminal
+# Open log file directly in Notepad
+notepad %APPDATA%\clipai\logs\main.log
+
+# View in Command Prompt
 type %APPDATA%\clipai\logs\main.log
 ```
+
+**Note:** If the logs folder doesn't exist, the app may not have been launched yet, or electron-log may not have initialized. Launch the app once and the log file will be created automatically.
 
 ## Scripts
 
