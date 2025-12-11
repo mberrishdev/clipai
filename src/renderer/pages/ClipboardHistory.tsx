@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
 import HistoryItemCard from "../components/ClipboardItem";
 import "./ClipboardHistory.css";
@@ -9,14 +9,42 @@ interface ClipboardHistoryProps {
 
 export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [history, setHistory] = useState<ClipboardItemType[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    window.electronAPI.getClipboardHistory().then(setHistory);
+    window.electronAPI.getClipboardHistory().then((items) => {
+      console.log(`Initial history loaded: ${items.length} items`);
+      setHistory(items);
+    });
 
     window.electronAPI.onClipboardUpdate((item) => {
       setHistory((prev) => [item, ...prev]);
     });
   }, []);
+
+  const loadMore = async () => {
+    if (isLoading || !hasMore) {
+      console.log(`loadMore blocked: isLoading=${isLoading}, hasMore=${hasMore}`);
+      return;
+    }
+
+    console.log('loadMore: Fetching more items...');
+    setIsLoading(true);
+    try {
+      const moreItems = await window.electronAPI.loadMoreHistory(20);
+      console.log(`Loaded ${moreItems.length} more clipboard items`);
+      if (moreItems.length === 0) {
+        setHasMore(false);
+      } else {
+        setHistory((prev) => [...prev, ...moreItems]);
+      }
+    } catch (error) {
+      console.error("Failed to load more items:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
@@ -44,15 +72,28 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
               <p className="hint">Copy some text to get started</p>
             </div>
           ) : (
-            <div className="history-list">
-              {history.map((item, index) => (
-                <HistoryItemCard
-                  key={index}
-                  item={item}
-                  index={index}
-                />
-              ))}
-            </div>
+            <>
+              <div className="history-list">
+                {history.map((item, index) => (
+                  <HistoryItemCard
+                    key={item.id || index}
+                    item={item}
+                    index={index}
+                  />
+                ))}
+              </div>
+              {hasMore && (
+                <div className="load-more-container">
+                  <button
+                    className="load-more-btn"
+                    onClick={loadMore}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>

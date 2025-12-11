@@ -3,6 +3,7 @@ import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   getClipboardHistory: () => ipcRenderer.invoke("get-clipboard-history"),
+  loadMoreHistory: (limit: number) => ipcRenderer.invoke("load-more-history", limit),
   onClipboardUpdate: (callback: (item: ClipboardItem) => void) => {
     ipcRenderer.on("clipboard-update", (_event, item) => callback(item));
   },

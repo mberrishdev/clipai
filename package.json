@@ -8,25 +8,31 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "postinstall": "electron-rebuild",
     "dev": "concurrently \"bun run dev:renderer\" \"bun run dev:electron\"",
     "dev:renderer": "vite",
     "dev:preload": "bun run scripts/build-preload.ts",
-    "dev:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron",
+    "dev:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron --external better-sqlite3 --external electron-liquid-glass",
     "dev:electron": "bun run dev:preload && bun run dev:main && wait-on http://localhost:5173 && electron .",
     "build": "bun run build:renderer && bun run build:main && bun run build:preload",
     "build:renderer": "vite build",
-    "build:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron",
+    "build:main": "bun build src/main/main.ts --outdir dist/main --target node --external electron --external better-sqlite3 --external electron-liquid-glass",
     "build:preload": "bun build src/main/preload.ts --outdir dist/main --target node --format cjs --external electron",
     "package": "bun run build && electron-builder",
     "package:all": "bun run build && electron-builder --mac --win",
-    "package:dir": "bun run build && electron-builder --dir"
+    "package:dir": "bun run build && electron-builder --dir",
+    "rebuild": "electron-rebuild"
   },
   "build": {
     "appId": "com.clipai.app",
     "productName": "clipai",
     "files": [
       "dist/**/*",
-      "assets/**/*"
+      "assets/**/*",
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
     ],
     "directories": {
       "output": "release"
@@ -75,13 +81,16 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "electron": "^39.2.6",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@vitejs/plugin-react": "^5.1.2",
+    "better-sqlite3": "^12.5.0",
     "concurrently": "^9.2.1",
     "electron-log": "^5.4.3",
     "highlight.js": "^11.11.1",

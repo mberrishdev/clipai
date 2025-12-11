@@ -7,6 +7,7 @@ export interface AppConfig {
 
 export interface ElectronAPI {
   getClipboardHistory: () => Promise<ClipboardItem[]>;
+  loadMoreHistory: (limit: number) => Promise<ClipboardItem[]>;
   onClipboardUpdate: (callback: (item: ClipboardItem) => void) => void;
   onNavigate: (callback: (page: string) => void) => void;
   setTransparency: (enabled: boolean) => Promise<void>;
