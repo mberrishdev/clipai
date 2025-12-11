@@ -17,9 +17,15 @@ export default function Settings({
   const [isEditingShortcut, setIsEditingShortcut] = useState(false);
   const [shortcutError, setShortcutError] = useState("");
 
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [isEditingApiKey, setIsEditingApiKey] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState("");
+  const [apiKeySuccess, setApiKeySuccess] = useState(false);
+
   useEffect(() => {
     window.electronAPI.getConfig().then((config) => {
       setGlobalShortcut(config.globalShortcut);
+      setOpenaiApiKey(config.openaiApiKey || "");
     });
   }, []);
 
@@ -43,6 +49,32 @@ export default function Settings({
     setShortcutError("");
     const config = await window.electronAPI.getConfig();
     setGlobalShortcut(config.globalShortcut);
+  };
+
+  const handleApiKeySave = async () => {
+    setApiKeyError("");
+    setApiKeySuccess(false);
+
+    if (!openaiApiKey.trim()) {
+      setApiKeyError("API key cannot be empty");
+      return;
+    }
+
+    const result = await window.electronAPI.setOpenAIApiKey(openaiApiKey.trim());
+    if (result.success) {
+      setIsEditingApiKey(false);
+      setApiKeySuccess(true);
+      setTimeout(() => setApiKeySuccess(false), 3000);
+    } else {
+      setApiKeyError(result.error || "Failed to save API key");
+    }
+  };
+
+  const handleApiKeyCancel = async () => {
+    setIsEditingApiKey(false);
+    setApiKeyError("");
+    const config = await window.electronAPI.getConfig();
+    setOpenaiApiKey(config.openaiApiKey || "");
   };
 
   return (
@@ -124,6 +156,59 @@ export default function Settings({
                       onClick={() => setIsEditingShortcut(true)}
                     >
                       Change
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="setting-group">
+            <h2>AI Features</h2>
+            <div className="setting-item">
+              <div className="setting-info">
+                <label>OpenAI API Key</label>
+                <p>Required for semantic search functionality</p>
+                {apiKeyError && (
+                  <p className="error-message">{apiKeyError}</p>
+                )}
+                {apiKeySuccess && (
+                  <p className="success-message">API key saved successfully!</p>
+                )}
+              </div>
+              <div className="shortcut-control">
+                {isEditingApiKey ? (
+                  <>
+                    <input
+                      type="password"
+                      className="shortcut-input"
+                      value={openaiApiKey}
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      placeholder="sk-..."
+                    />
+                    <button
+                      className="btn-primary"
+                      onClick={handleApiKeySave}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleApiKeyCancel}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="shortcut-display">
+                      {openaiApiKey ? "••••••••••••••••" : "Not configured"}
+                    </span>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setIsEditingApiKey(true)}
+                    >
+                      {openaiApiKey ? "Change" : "Add"}
                     </button>
                   </>
                 )}

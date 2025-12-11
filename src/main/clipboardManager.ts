@@ -2,6 +2,7 @@ import { clipboard, BrowserWindow, nativeImage } from "electron";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 import type { DatabaseManager } from "./database.ts";
 import log from "electron-log";
+import type { EmbeddingService } from "./embeddingService.ts";
 
 export class ClipboardManager {
   private history: ClipboardItem[] = [];
@@ -10,10 +11,16 @@ export class ClipboardManager {
   private intervalId: NodeJS.Timeout | null = null;
   private window: BrowserWindow | null = null;
   private db: DatabaseManager;
+  private embeddingService: EmbeddingService;
 
-  constructor(window: BrowserWindow, database: DatabaseManager) {
+  constructor(
+    window: BrowserWindow,
+    database: DatabaseManager,
+    embeddingService: EmbeddingService
+  ) {
     this.window = window;
     this.db = database;
+    this.embeddingService = embeddingService;
     this.loadHistoryFromDB();
   }
 
@@ -23,7 +30,9 @@ export class ClipboardManager {
       log.info(`Database stats:`, stats);
 
       this.history = this.db.getItems(15);
-      log.info(`Loaded ${this.history.length} items from database (initial load)`);
+      log.info(
+        `Loaded ${this.history.length} items from database (initial load)`
+      );
 
       if (this.history.length > 0) {
         const lastItem = this.history[0];
@@ -43,7 +52,9 @@ export class ClipboardManager {
       const offset = this.history.length;
       const moreItems = this.db.getItems(limit, offset);
       this.history.push(...moreItems);
-      log.info(`Loaded ${moreItems.length} more items (total: ${this.history.length})`);
+      log.info(
+        `Loaded ${moreItems.length} more items (total: ${this.history.length})`
+      );
       return moreItems;
     } catch (error) {
       log.error("Failed to load more items from database:", error);
@@ -52,7 +63,7 @@ export class ClipboardManager {
   }
 
   start() {
-    this.intervalId = setInterval(() => {
+    this.intervalId = setInterval(async () => {
       const image = clipboard.readImage();
 
       if (!image.isEmpty()) {
@@ -64,6 +75,7 @@ export class ClipboardManager {
             type: "image",
             image: imageDataURL,
             timestamp: Date.now(),
+            embedding: [],
           };
 
           // Save to database
@@ -90,10 +102,16 @@ export class ClipboardManager {
 
         if (trimmedText && text !== this.lastClipboardText) {
           this.lastClipboardText = text;
+
+          const embedding = await this.embeddingService.getEmbedding(
+            trimmedText
+          );
+
           const item: ClipboardItem = {
             type: "text",
             text,
             timestamp: Date.now(),
+            embedding,
           };
 
           // Save to database
@@ -127,6 +145,22 @@ export class ClipboardManager {
 
   getHistory(): ClipboardItem[] {
     return this.history;
+  }
+
+  async semanticSearch(query: string, limit: number = 10): Promise<ClipboardItem[]> {
+    try {
+      log.info(`Performing semantic search for: "${query}"`);
+
+      const queryEmbedding = await this.embeddingService.getEmbedding(query);
+
+      const results = this.db.semanticSearch(queryEmbedding, limit);
+      log.info(`Found ${results.length} results`);
+
+      return results;
+    } catch (error) {
+      log.error("Failed to perform semantic search:", error);
+      throw error;
+    }
   }
 
   clear() {
