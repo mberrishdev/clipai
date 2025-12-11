@@ -13,10 +13,10 @@ import { ClipboardManager } from "./clipboardManager.ts";
 import { ConfigManager } from "./configManager.ts";
 import { DatabaseManager } from "./database.ts";
 import log from "electron-log";
+import { EmbeddingService } from "./embeddingService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Configure electron-log
 log.initialize({ preload: true });
 log.transports.file.level = "info";
 log.transports.console.level = "info";
@@ -34,6 +34,7 @@ let tray: Tray | null = null;
 let clipboardManager: ClipboardManager | null = null;
 let configManager: ConfigManager | null = null;
 let databaseManager: DatabaseManager | null = null;
+let embeddingService: EmbeddingService | null = null;
 let isQuitting = false;
 
 async function createWindow() {
@@ -88,7 +89,11 @@ async function createWindow() {
     log.error("Failed to load content:", error);
   }
 
-  clipboardManager = new ClipboardManager(win, databaseManager!);
+  clipboardManager = new ClipboardManager(
+    win,
+    databaseManager!,
+    embeddingService!
+  );
   clipboardManager.start();
 }
 
@@ -157,6 +162,21 @@ ipcMain.handle("load-more-history", (_event, limit: number = 50) => {
   return clipboardManager?.loadMore(limit) || [];
 });
 
+ipcMain.handle(
+  "semantic-search",
+  async (_event, query: string, limit: number = 10) => {
+    try {
+      if (!clipboardManager) {
+        throw new Error("ClipboardManager not initialized");
+      }
+      return await clipboardManager.semanticSearch(query, limit);
+    } catch (error) {
+      log.error("Failed to perform semantic search:", error);
+      throw error;
+    }
+  }
+);
+
 ipcMain.handle("set-transparency", (_event, enabled: boolean) => {
   if (win) {
     win.webContents.send("transparency-changed", enabled);
@@ -196,6 +216,18 @@ ipcMain.handle("set-global-shortcut", (_event, shortcut: string) => {
   }
 });
 
+ipcMain.handle("set-openai-api-key", (_event, apiKey: string) => {
+  try {
+    configManager?.setOpenAIApiKey(apiKey);
+    embeddingService?.refreshApiKey();
+    log.info("OpenAI API key updated");
+    return { success: true };
+  } catch (error) {
+    log.error("Failed to set OpenAI API key:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
 function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
   globalShortcut.unregisterAll();
 
@@ -223,8 +255,9 @@ function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
 app.whenReady().then(() => {
   log.info("App ready");
 
-  databaseManager = new DatabaseManager();
   configManager = new ConfigManager();
+  databaseManager = new DatabaseManager();
+  embeddingService = new EmbeddingService(configManager);
 
   app.setLoginItemSettings({
     openAtLogin: true,

@@ -2,6 +2,7 @@ import Database from "better-sqlite3";
 import { app } from "electron";
 import { join } from "path";
 import log from "electron-log";
+import * as sqliteVec from "sqlite-vec";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 export class DatabaseManager {
@@ -14,6 +15,10 @@ export class DatabaseManager {
 
     this.db = new Database(dbPath);
     this.db.pragma("journal_mode = WAL");
+
+    sqliteVec.load(this.db);
+    log.info("sqlite-vec extension loaded");
+
     this.initTables();
   }
 
@@ -25,6 +30,7 @@ export class DatabaseManager {
         text TEXT,
         image TEXT,
         timestamp INTEGER NOT NULL,
+        embedding BLOB,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -35,19 +41,41 @@ export class DatabaseManager {
   }
 
   addItem(item: Omit<ClipboardItem, "id">): number {
-    const stmt = this.db.prepare(`
-      INSERT INTO clipboard_items (type, text, image, timestamp)
-      VALUES (?, ?, ?, ?)
-    `);
+    // If embedding exists, insert with vec_f32, otherwise insert without it
+    if (item.embedding && item.embedding.length > 0) {
+      const stmt = this.db.prepare(`
+        INSERT INTO clipboard_items (type, text, image, timestamp, embedding)
+        VALUES (?, ?, ?, ?, vec_f32(?))
+      `);
 
-    const result = stmt.run(
-      item.type,
-      item.text || null,
-      item.image || null,
-      item.timestamp
-    );
+      const embeddingBlob = Buffer.from(
+        new Float32Array(item.embedding).buffer
+      );
 
-    return result.lastInsertRowid as number;
+      const result = stmt.run(
+        item.type,
+        item.text || null,
+        item.image || null,
+        item.timestamp,
+        embeddingBlob
+      );
+
+      return result.lastInsertRowid as number;
+    } else {
+      const stmt = this.db.prepare(`
+        INSERT INTO clipboard_items (type, text, image, timestamp)
+        VALUES (?, ?, ?, ?)
+      `);
+
+      const result = stmt.run(
+        item.type,
+        item.text || null,
+        item.image || null,
+        item.timestamp
+      );
+
+      return result.lastInsertRowid as number;
+    }
   }
 
   getItems(limit: number = 1000, offset: number = 0): ClipboardItem[] {
@@ -108,6 +136,27 @@ export class DatabaseManager {
     `);
 
     return stmt.all(`%${query}%`, limit) as ClipboardItem[];
+  }
+
+  semanticSearch(
+    queryEmbedding: number[],
+    limit: number = 10
+  ): ClipboardItem[] {
+    const stmt = this.db.prepare(`
+      SELECT
+        id,
+        type,
+        text,
+        image,
+        timestamp,
+        vec_distance_cosine(embedding, vec_f32(?)) as distance
+      FROM clipboard_items
+      WHERE embedding IS NOT NULL
+      ORDER BY distance ASC
+      LIMIT ?
+    `);
+
+    return stmt.all(JSON.stringify(queryEmbedding), limit) as ClipboardItem[];
   }
 
   close() {

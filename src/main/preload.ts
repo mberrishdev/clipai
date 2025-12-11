@@ -3,7 +3,10 @@ import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   getClipboardHistory: () => ipcRenderer.invoke("get-clipboard-history"),
-  loadMoreHistory: (limit: number) => ipcRenderer.invoke("load-more-history", limit),
+  loadMoreHistory: (limit: number) =>
+    ipcRenderer.invoke("load-more-history", limit),
+  semanticSearch: (query: string, limit?: number) =>
+    ipcRenderer.invoke("semantic-search", query, limit),
   onClipboardUpdate: (callback: (item: ClipboardItem) => void) => {
     ipcRenderer.on("clipboard-update", (_event, item) => callback(item));
   },
@@ -17,4 +20,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getConfig: () => ipcRenderer.invoke("get-config"),
   setGlobalShortcut: (shortcut: string) =>
     ipcRenderer.invoke("set-global-shortcut", shortcut),
+  setOpenAIApiKey: (apiKey: string) =>
+    ipcRenderer.invoke("set-openai-api-key", apiKey),
 });

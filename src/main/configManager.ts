@@ -6,11 +6,13 @@ import log from "electron-log";
 export interface AppConfig {
   globalShortcut: string;
   transparency: boolean;
+  openaiApiKey?: string;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
   globalShortcut: "CommandOrControl+Shift+V",
   transparency: true,
+  openaiApiKey: undefined,
 };
 
 export class ConfigManager {
@@ -63,6 +65,15 @@ export class ConfigManager {
 
   setTransparency(enabled: boolean): void {
     this.config.transparency = enabled;
+    this.saveConfig();
+  }
+
+  getOpenAIApiKey(): string | undefined {
+    return this.config.openaiApiKey;
+  }
+
+  setOpenAIApiKey(apiKey: string): void {
+    this.config.openaiApiKey = apiKey.trim();
     this.saveConfig();
   }
 }
