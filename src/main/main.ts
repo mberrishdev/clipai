@@ -11,6 +11,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { ClipboardManager } from "./clipboardManager.ts";
 import { ConfigManager } from "./configManager.ts";
+import { DatabaseManager } from "./database.ts";
 import log from "electron-log";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,6 +23,7 @@ let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let clipboardManager: ClipboardManager | null = null;
 let configManager: ConfigManager | null = null;
+let databaseManager: DatabaseManager | null = null;
 let isQuitting = false;
 
 async function createWindow() {
@@ -83,7 +85,7 @@ async function createWindow() {
     log.error("Failed to load content:", error);
   }
 
-  clipboardManager = new ClipboardManager(win);
+  clipboardManager = new ClipboardManager(win, databaseManager!);
   clipboardManager.start();
   log.info("ClipboardManager started");
 }
@@ -161,10 +163,12 @@ ipcMain.handle("get-clipboard-history", () => {
   return clipboardManager?.getHistory() || [];
 });
 
+ipcMain.handle("load-more-history", (_event, limit: number = 50) => {
+  return clipboardManager?.loadMore(limit) || [];
+});
+
 ipcMain.handle("set-transparency", (_event, enabled: boolean) => {
   if (win) {
-    // Note: Changing transparency dynamically requires recreating the window
-    // For now, we'll just update the CSS class
     win.webContents.send("transparency-changed", enabled);
   }
 });
@@ -203,7 +207,6 @@ ipcMain.handle("set-global-shortcut", (_event, shortcut: string) => {
 });
 
 function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
-  // Unregister all shortcuts first
   globalShortcut.unregisterAll();
 
   const registered = globalShortcut.register(shortcut, () => {
@@ -232,6 +235,8 @@ app.whenReady().then(() => {
   log.info("isPackaged:", app.isPackaged);
   log.info("__dirname:", __dirname);
 
+  databaseManager = new DatabaseManager();
+
   configManager = new ConfigManager();
 
   app.setLoginItemSettings({
@@ -257,11 +262,8 @@ app.whenReady().then(() => {
   log.info("Log file location:", log.transports.file.getFile().path);
 });
 
-app.on("window-all-closed", () => {
-  // Prevent app from quitting
-});
+app.on("window-all-closed", () => {});
 
 app.on("will-quit", () => {
-  // Unregister all shortcuts when app quits
   globalShortcut.unregisterAll();
 });
