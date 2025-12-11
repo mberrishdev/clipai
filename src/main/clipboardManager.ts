@@ -41,13 +41,9 @@ export class ClipboardManager {
   loadMore(limit: number = 20): ClipboardItem[] {
     try {
       const offset = this.history.length;
-      log.info(`loadMore called: offset=${offset}, limit=${limit}`);
-
       const moreItems = this.db.getItems(limit, offset);
       this.history.push(...moreItems);
-      log.info(
-        `Loaded ${moreItems.length} more items (offset was ${offset}, total now: ${this.history.length})`
-      );
+      log.info(`Loaded ${moreItems.length} more items (total: ${this.history.length})`);
       return moreItems;
     } catch (error) {
       log.error("Failed to load more items from database:", error);
@@ -79,7 +75,6 @@ export class ClipboardManager {
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
             }
-            log.info(`Image clipboard item saved to DB with id: ${id}`);
           } catch (error) {
             log.error("Failed to save image to database:", error);
             // Still add to memory even if DB fails
@@ -110,7 +105,6 @@ export class ClipboardManager {
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
             }
-            log.info(`Text clipboard item saved to DB with id: ${id}`);
           } catch (error) {
             log.error("Failed to save text to database:", error);
             // Still add to memory even if DB fails
