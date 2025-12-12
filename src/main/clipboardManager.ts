@@ -103,18 +103,40 @@ export class ClipboardManager {
         if (trimmedText && text !== this.lastClipboardText) {
           this.lastClipboardText = text;
 
-          const embedding = await this.embeddingService.getEmbedding(
-            trimmedText
-          );
-
           const item: ClipboardItem = {
             type: "text",
             text,
             timestamp: Date.now(),
-            embedding,
+            embedding: [],
           };
 
-          // Save to database
+          // Generate embedding asynchronously without blocking clipboard monitoring
+          this.embeddingService
+            .getEmbedding(trimmedText)
+            .then((embedding) => {
+              // Validate embedding before assigning
+              if (
+                embedding &&
+                Array.isArray(embedding) &&
+                embedding.length > 0
+              ) {
+                item.embedding = embedding;
+                // Update in database with embedding
+                try {
+                  this.db.updateItemEmbedding(item.id!, embedding);
+                } catch (error) {
+                  log.error("Failed to update embedding in database:", error);
+                }
+              } else {
+                log.warn("Invalid or empty embedding received, skipping");
+              }
+            })
+            .catch((error) => {
+              log.error("Failed to generate embedding:", error);
+              // Continue without embedding - item is already saved
+            });
+
+          // Save to database immediately (without embedding)
           try {
             const id = this.db.addItem(item);
             item.id = id;

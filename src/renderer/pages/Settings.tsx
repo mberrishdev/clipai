@@ -92,6 +92,14 @@ export default function Settings({
     }
   }, [isRecordingShortcut, handleKeyDown]);
 
+  // Cleanup timeout for API key success message
+  useEffect(() => {
+    if (apiKeySuccess) {
+      const timeoutId = setTimeout(() => setApiKeySuccess(false), 3000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [apiKeySuccess]);
+
   const handleTransparencyChange = (value: boolean) => {
     onTransparencyChange(value);
     window.electronAPI.setTransparency(value);
@@ -141,7 +149,6 @@ export default function Settings({
     if (result.success) {
       setIsEditingApiKey(false);
       setApiKeySuccess(true);
-      setTimeout(() => setApiKeySuccess(false), 3000);
     } else {
       setApiKeyError(result.error || "Failed to save API key");
     }

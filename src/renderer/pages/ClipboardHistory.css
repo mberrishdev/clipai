@@ -162,6 +162,18 @@ body.opaque .app {
   letter-spacing: 0.03em;
 }
 
+.search-error {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
 .search-icon {
   position: absolute;
   left: 1rem;

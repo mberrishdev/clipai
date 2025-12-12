@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
 import HistoryItemCard from "../components/ClipboardItem";
 import "./ClipboardHistory.css";
+import log from "electron-log/renderer";
 
 interface ClipboardHistoryProps {}
 
@@ -11,29 +12,40 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   const performSearch = async () => {
-    console.log("Search triggered for:", searchQuery);
+    log.info("Search triggered for:", searchQuery);
 
     if (searchQuery.trim()) {
+      if (!hasApiKey) {
+        setSearchError("Please configure your OpenAI API key in Settings to use semantic search.");
+        return;
+      }
+
       setIsLoading(true);
+      setSearchError("");
       try {
-        console.log("Performing semantic search for:", searchQuery);
+        log.info("Performing semantic search for:", searchQuery);
         const results = await window.electronAPI.semanticSearch(
           searchQuery,
           10
         );
-        console.log(`Found ${results.length} results:`, results);
+        log.info(`Found ${results.length} results:`, results);
         setHistory(results);
+        setHasMore(false); // Disable load more for search results
       } catch (error) {
-        console.error("Semantic search failed:", error);
+        log.error("Semantic search failed:", error);
+        setSearchError("Search failed. Please check your API key and try again.");
       } finally {
         setIsLoading(false);
       }
     } else {
-      console.log("Empty query, reloading full history");
+      log.info("Empty query, reloading full history");
+      setSearchError("");
       const fullHistory = await window.electronAPI.getClipboardHistory();
       setHistory(fullHistory);
+      setHasMore(true);
     }
   };
 
@@ -45,7 +57,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
 
   useEffect(() => {
     window.electronAPI.getClipboardHistory().then((items) => {
-      console.log(`Initial history loaded: ${items.length} items`);
+      log.info(`Initial history loaded: ${items.length} items`);
       setHistory(items);
     });
 
@@ -55,29 +67,30 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
 
     window.electronAPI.onClipboardUpdate((item) => {
       setHistory((prev) => [item, ...prev]);
+      setHasMore(true);
     });
   }, []);
 
   const loadMore = async () => {
     if (isLoading || !hasMore) {
-      console.log(
+      log.info(
         `loadMore blocked: isLoading=${isLoading}, hasMore=${hasMore}`
       );
       return;
     }
 
-    console.log("loadMore: Fetching more items...");
+    log.info("loadMore: Fetching more items...");
     setIsLoading(true);
     try {
       const moreItems = await window.electronAPI.loadMoreHistory(20);
-      console.log(`Loaded ${moreItems.length} more clipboard items`);
+      log.info(`Loaded ${moreItems.length} more clipboard items`);
       if (moreItems.length === 0) {
         setHasMore(false);
       } else {
         setHistory((prev) => [...prev, ...moreItems]);
       }
     } catch (error) {
-      console.error("Failed to load more items:", error);
+      log.error("Failed to load more items:", error);
     } finally {
       setIsLoading(false);
     }
@@ -137,10 +150,12 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
                 className="clear-btn"
                 onClick={async () => {
                   setSearchQuery("");
-                  console.log("Search cleared, reloading full history");
+                  setSearchError("");
+                  log.info("Search cleared, reloading full history");
                   const fullHistory =
                     await window.electronAPI.getClipboardHistory();
                   setHistory(fullHistory);
+                  setHasMore(true);
                 }}
                 aria-label="Clear search"
               >
@@ -163,6 +178,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
               search.
             </p>
           )}
+          {searchError && <p className="search-error">{searchError}</p>}
         </div>
         <main className="content">
           {history.length === 0 ? (
