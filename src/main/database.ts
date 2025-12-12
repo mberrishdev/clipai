@@ -13,13 +13,37 @@ export class DatabaseManager {
     const dbPath = join(userDataPath, "clipboard.db");
     log.info("Database path:", dbPath);
 
-    this.db = new Database(dbPath);
-    this.db.pragma("journal_mode = WAL");
+    try {
+      log.info("Opening database...");
+      this.db = new Database(dbPath);
+      log.info("Database opened successfully");
+      
+      log.info("Setting journal mode...");
+      this.db.pragma("journal_mode = WAL");
+      log.info("Journal mode set");
 
-    sqliteVec.load(this.db);
-    log.info("sqlite-vec extension loaded");
+      log.info("Loading sqlite-vec extension...");
+      let loadablePath = sqliteVec.getLoadablePath();
 
-    this.initTables();
+      // Fix path for Electron asar packaging
+      if (loadablePath.includes('.asar')) {
+        loadablePath = loadablePath.replace(
+          join('app.asar', 'node_modules'),
+          join('app.asar.unpacked', 'node_modules')
+        );
+      }
+
+      log.info("Loading sqlite-vec from:", loadablePath);
+      this.db.loadExtension(loadablePath);
+      log.info("sqlite-vec extension loaded");
+
+      log.info("Initializing tables...");
+      this.initTables();
+      log.info("Database initialization complete");
+    } catch (error) {
+      log.error("Database initialization error:", error);
+      throw error;
+    }
   }
 
   private initTables() {

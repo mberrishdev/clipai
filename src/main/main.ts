@@ -22,15 +22,6 @@ log.transports.file.level = "info";
 log.transports.console.level = "info";
 log.transports.file.format = "[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {text}";
 
-process.stdout?.on?.("error", (err) => {
-  if (err.code === "EPIPE") return;
-  throw err;
-});
-process.stderr?.on?.("error", (err) => {
-  if (err.code === "EPIPE") return;
-  throw err;
-});
-
 log.info("=".repeat(80));
 log.info("App starting...");
 log.info("Platform:", process.platform);

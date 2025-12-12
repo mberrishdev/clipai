@@ -28,10 +28,15 @@
     "files": [
       "dist/**/*",
       "assets/**/*",
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/sqlite-vec/**/*",
+      "!node_modules/sqlite-vec/vendor/**/*",
+      "node_modules/sqlite-vec-*/**/*"
     ],
     "asarUnpack": [
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/better-sqlite3/**/*",
+      "node_modules/sqlite-vec/**/*",
+      "node_modules/sqlite-vec-*/**/*"
     ],
     "directories": {
       "output": "release"

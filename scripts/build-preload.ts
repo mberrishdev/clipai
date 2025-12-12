@@ -2,7 +2,7 @@ import { build } from 'bun';
 
 const result = await build({
   entrypoints: ['./src/main/preload.ts'],
-  outdir: './dist/main',
+  outdir: './src/main',
   target: 'node',
   format: 'cjs',
   external: ['electron'],
@@ -14,4 +14,4 @@ if (!result.success) {
   process.exit(1);
 }
 
-console.log('Preload script built successfully to dist/main');
+console.log('Preload script built successfully to src/main');
