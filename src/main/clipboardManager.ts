@@ -121,8 +121,6 @@ export class ClipboardManager {
             }
 
             // Generate embedding asynchronously without blocking clipboard monitoring
-            // Store the id in a variable to avoid race conditions
-            const itemId = id;
             this.embeddingService
               .getEmbedding(trimmedText)
               .then((embedding) => {
@@ -132,10 +130,9 @@ export class ClipboardManager {
                   Array.isArray(embedding) &&
                   embedding.length > 0
                 ) {
-                  item.embedding = embedding;
                   // Update in database with embedding
                   try {
-                    this.db.updateItemEmbedding(itemId, embedding);
+                    this.db.updateItemEmbedding(id, embedding);
                   } catch (error) {
                     log.error("Failed to update embedding in database:", error);
                   }
