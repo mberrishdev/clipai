@@ -1,10 +1,50 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./Settings.css";
 
 interface SettingsProps {
   onBack: () => void;
   isTransparent: boolean;
   onTransparencyChange: (value: boolean) => void;
+}
+
+function keyEventToAccelerator(e: KeyboardEvent): string {
+  const parts: string[] = [];
+
+  if (e.metaKey || e.ctrlKey) parts.push("CommandOrControl");
+  if (e.altKey) parts.push("Alt");
+  if (e.shiftKey) parts.push("Shift");
+
+  const key = e.key;
+
+  if (["Control", "Shift", "Alt", "Meta"].includes(key)) {
+    return "";
+  }
+
+  const keyMap: Record<string, string> = {
+    " ": "Space",
+    ArrowUp: "Up",
+    ArrowDown: "Down",
+    ArrowLeft: "Left",
+    ArrowRight: "Right",
+    Escape: "Escape",
+    Enter: "Enter",
+    Backspace: "Backspace",
+    Delete: "Delete",
+    Tab: "Tab",
+  };
+
+  const mappedKey = keyMap[key] || key.toUpperCase();
+  parts.push(mappedKey);
+
+  return parts.join("+");
+}
+
+function formatShortcutDisplay(shortcut: string): string {
+  return shortcut
+    .replace("CommandOrControl", "⌘/Ctrl")
+    .replace("Shift", "⇧")
+    .replace("Alt", "⌥")
+    .replace(/\+/g, " + ");
 }
 
 export default function Settings({
@@ -14,7 +54,8 @@ export default function Settings({
   const [globalShortcut, setGlobalShortcut] = useState(
     "CommandOrControl+Shift+V"
   );
-  const [isEditingShortcut, setIsEditingShortcut] = useState(false);
+  const [isRecordingShortcut, setIsRecordingShortcut] = useState(false);
+  const [recordedShortcut, setRecordedShortcut] = useState("");
   const [shortcutError, setShortcutError] = useState("");
 
   const [openaiApiKey, setOpenaiApiKey] = useState("");
@@ -29,26 +70,61 @@ export default function Settings({
     });
   }, []);
 
+  // Handle keyboard capture for shortcut recording
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!isRecordingShortcut) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const accelerator = keyEventToAccelerator(e);
+      if (accelerator) {
+        setRecordedShortcut(accelerator);
+      }
+    },
+    [isRecordingShortcut]
+  );
+
+  useEffect(() => {
+    if (isRecordingShortcut) {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [isRecordingShortcut, handleKeyDown]);
+
   const handleTransparencyChange = (value: boolean) => {
     onTransparencyChange(value);
     window.electronAPI.setTransparency(value);
   };
 
-  const handleShortcutSave = async () => {
+  const startRecording = () => {
+    setIsRecordingShortcut(true);
+    setRecordedShortcut("");
     setShortcutError("");
-    const result = await window.electronAPI.setGlobalShortcut(globalShortcut);
+  };
+
+  const handleShortcutSave = async () => {
+    if (!recordedShortcut) {
+      setShortcutError("Please press a key combination");
+      return;
+    }
+
+    setShortcutError("");
+    const result = await window.electronAPI.setGlobalShortcut(recordedShortcut);
     if (result.success) {
-      setIsEditingShortcut(false);
+      setGlobalShortcut(recordedShortcut);
+      setIsRecordingShortcut(false);
+      setRecordedShortcut("");
     } else {
       setShortcutError(result.error || "Failed to register shortcut");
     }
   };
 
-  const handleShortcutCancel = async () => {
-    setIsEditingShortcut(false);
+  const handleShortcutCancel = () => {
+    setIsRecordingShortcut(false);
+    setRecordedShortcut("");
     setShortcutError("");
-    const config = await window.electronAPI.getConfig();
-    setGlobalShortcut(config.globalShortcut);
   };
 
   const handleApiKeySave = async () => {
@@ -60,7 +136,9 @@ export default function Settings({
       return;
     }
 
-    const result = await window.electronAPI.setOpenAIApiKey(openaiApiKey.trim());
+    const result = await window.electronAPI.setOpenAIApiKey(
+      openaiApiKey.trim()
+    );
     if (result.success) {
       setIsEditingApiKey(false);
       setApiKeySuccess(true);
@@ -126,18 +204,28 @@ export default function Settings({
                 )}
               </div>
               <div className="shortcut-control">
-                {isEditingShortcut ? (
+                {isRecordingShortcut ? (
                   <>
-                    <input
-                      type="text"
-                      className="shortcut-input"
-                      value={globalShortcut}
-                      onChange={(e) => setGlobalShortcut(e.target.value)}
-                      placeholder="e.g., CommandOrControl+Shift+V"
-                    />
+                    <div
+                      className={`shortcut-recorder ${
+                        recordedShortcut ? "has-value" : ""
+                      }`}
+                    >
+                      {recordedShortcut ? (
+                        <span className="recorded-keys">
+                          {formatShortcutDisplay(recordedShortcut)}
+                        </span>
+                      ) : (
+                        <span className="recording-prompt">
+                          <span className="pulse-dot"></span>
+                          Press keys...
+                        </span>
+                      )}
+                    </div>
                     <button
                       className="btn-primary"
                       onClick={handleShortcutSave}
+                      disabled={!recordedShortcut}
                     >
                       Save
                     </button>
@@ -150,11 +238,10 @@ export default function Settings({
                   </>
                 ) : (
                   <>
-                    <span className="shortcut-display">{globalShortcut}</span>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => setIsEditingShortcut(true)}
-                    >
+                    <span className="shortcut-display">
+                      {formatShortcutDisplay(globalShortcut)}
+                    </span>
+                    <button className="btn-secondary" onClick={startRecording}>
                       Change
                     </button>
                   </>
@@ -169,9 +256,7 @@ export default function Settings({
               <div className="setting-info">
                 <label>OpenAI API Key</label>
                 <p>Required for semantic search functionality</p>
-                {apiKeyError && (
-                  <p className="error-message">{apiKeyError}</p>
-                )}
+                {apiKeyError && <p className="error-message">{apiKeyError}</p>}
                 {apiKeySuccess && (
                   <p className="success-message">API key saved successfully!</p>
                 )}
@@ -186,10 +271,7 @@ export default function Settings({
                       onChange={(e) => setOpenaiApiKey(e.target.value)}
                       placeholder="sk-..."
                     />
-                    <button
-                      className="btn-primary"
-                      onClick={handleApiKeySave}
-                    >
+                    <button className="btn-primary" onClick={handleApiKeySave}>
                       Save
                     </button>
                     <button
