@@ -8,7 +8,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "postinstall": "electron-rebuild",
     "dev": "concurrently \"bun run dev:renderer\" \"bun run dev:electron\"",
     "dev:renderer": "vite",
     "dev:preload": "bun run scripts/build-preload.ts",
