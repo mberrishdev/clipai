@@ -110,32 +110,6 @@ export class ClipboardManager {
             embedding: [],
           };
 
-          // Generate embedding asynchronously without blocking clipboard monitoring
-          this.embeddingService
-            .getEmbedding(trimmedText)
-            .then((embedding) => {
-              // Validate embedding before assigning
-              if (
-                embedding &&
-                Array.isArray(embedding) &&
-                embedding.length > 0
-              ) {
-                item.embedding = embedding;
-                // Update in database with embedding
-                try {
-                  this.db.updateItemEmbedding(item.id!, embedding);
-                } catch (error) {
-                  log.error("Failed to update embedding in database:", error);
-                }
-              } else {
-                log.warn("Invalid or empty embedding received, skipping");
-              }
-            })
-            .catch((error) => {
-              log.error("Failed to generate embedding:", error);
-              // Continue without embedding - item is already saved
-            });
-
           // Save to database immediately (without embedding)
           try {
             const id = this.db.addItem(item);
@@ -145,6 +119,34 @@ export class ClipboardManager {
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
             }
+
+            // Generate embedding asynchronously without blocking clipboard monitoring
+            // Store the id in a variable to avoid race conditions
+            const itemId = id;
+            this.embeddingService
+              .getEmbedding(trimmedText)
+              .then((embedding) => {
+                // Validate embedding before assigning
+                if (
+                  embedding &&
+                  Array.isArray(embedding) &&
+                  embedding.length > 0
+                ) {
+                  item.embedding = embedding;
+                  // Update in database with embedding
+                  try {
+                    this.db.updateItemEmbedding(itemId, embedding);
+                  } catch (error) {
+                    log.error("Failed to update embedding in database:", error);
+                  }
+                } else {
+                  log.warn("Invalid or empty embedding received, skipping");
+                }
+              })
+              .catch((error) => {
+                log.error("Failed to generate embedding:", error);
+                // Continue without embedding - item is already saved
+              });
           } catch (error) {
             log.error("Failed to save text to database:", error);
             // Still add to memory even if DB fails
