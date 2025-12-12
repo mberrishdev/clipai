@@ -1,4 +1,4 @@
-import { clipboard, BrowserWindow, nativeImage } from "electron";
+import { clipboard, BrowserWindow } from "electron";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 import type { DatabaseManager } from "./database.ts";
 import log from "electron-log";
@@ -147,7 +147,10 @@ export class ClipboardManager {
     return this.history;
   }
 
-  async semanticSearch(query: string, limit: number = 10): Promise<ClipboardItem[]> {
+  async semanticSearch(
+    query: string,
+    limit: number = 10
+  ): Promise<ClipboardItem[]> {
     try {
       log.info(`Performing semantic search for: "${query}"`);
 

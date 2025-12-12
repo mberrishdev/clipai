@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import "./Settings.css";
 
 interface SettingsProps {
-  onBack: () => void;
   isTransparent: boolean;
   onTransparencyChange: (value: boolean) => void;
 }

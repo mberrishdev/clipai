@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
 import HistoryItemCard from "../components/ClipboardItem";
 import "./ClipboardHistory.css";
 
-interface ClipboardHistoryProps {
-  onSettingsClick: () => void;
-}
+interface ClipboardHistoryProps {}
 
 export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [history, setHistory] = useState<ClipboardItemType[]>([]);
@@ -124,7 +122,11 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             <input
               type="text"
               className="search-input"
-              placeholder={hasApiKey ? "Search with AI..." : "Configure OpenAI API key in settings..."}
+              placeholder={
+                hasApiKey
+                  ? "Search with AI..."
+                  : "Configure OpenAI API key in settings..."
+              }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -156,7 +158,10 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
           {hasApiKey ? (
             <p className="search-hint">Press Enter to search</p>
           ) : (
-            <p className="search-warning">OpenAI API key required. Configure in Settings to enable semantic search.</p>
+            <p className="search-warning">
+              OpenAI API key required. Configure in Settings to enable semantic
+              search.
+            </p>
           )}
         </div>
         <main className="content">
