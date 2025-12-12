@@ -138,6 +138,17 @@ export class DatabaseManager {
     return stmt.all(`%${query}%`, limit) as ClipboardItem[];
   }
 
+  updateItemEmbedding(id: number, embedding: number[]): void {
+    const stmt = this.db.prepare(`
+      UPDATE clipboard_items
+      SET embedding = vec_f32(?)
+      WHERE id = ?
+    `);
+
+    const embeddingBlob = Buffer.from(new Float32Array(embedding).buffer);
+    stmt.run(embeddingBlob, id);
+  }
+
   semanticSearch(
     queryEmbedding: number[],
     limit: number = 10
@@ -156,7 +167,8 @@ export class DatabaseManager {
       LIMIT ?
     `);
 
-    return stmt.all(JSON.stringify(queryEmbedding), limit) as ClipboardItem[];
+    const embeddingBlob = Buffer.from(new Float32Array(queryEmbedding).buffer);
+    return stmt.all(embeddingBlob, limit) as ClipboardItem[];
   }
 
   close() {
