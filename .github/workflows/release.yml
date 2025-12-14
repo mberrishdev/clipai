@@ -55,9 +55,9 @@ jobs:
         run: bun run rebuild
 
       - name: Build and Package (Windows)
-        run: bun run package --win
-      - name: Build and Package (Windows)
         run: bun run package --win --publish never
+
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
