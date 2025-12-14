@@ -1,7 +1,7 @@
 {
   "name": "clipai",
   "version": "0.0.4",
-  "description": "Modern clipboard history manager for macOS",
+  "description": "Modern clipboard history manager powered by AI",
   "author": "Mikheil Berishvili",
   "main": "dist/main/main.js",
   "module": "index.ts",
