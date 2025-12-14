@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
 import HistoryItemCard from "../components/ClipboardItem";
+import { detectContentType } from "../utils/contentDetector";
 import "./ClipboardHistory.css";
 
 interface ClipboardHistoryProps {}
@@ -16,17 +17,13 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const performSearch = async () => {
-    console.log("Search triggered for:", searchQuery);
-
     if (searchQuery.trim()) {
       setIsLoading(true);
       try {
-        console.log("Performing semantic search for:", searchQuery);
         const results = await window.electronAPI.semanticSearch(
           searchQuery,
           10
         );
-        console.log(`Found ${results.length} results:`, results);
         setHistory(results);
       } catch (error) {
         console.error("Semantic search failed:", error);
@@ -49,7 +46,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const copySelectedItem = useCallback(async () => {
     const item = history[selectedIndex];
     if (!item) return;
-    
+
     if (item.type === "text" && item.text) {
       await navigator.clipboard.writeText(item.text);
     } else if (item.type === "image" && item.image) {
@@ -61,11 +58,15 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
     }
   }, [history, selectedIndex]);
 
-  // Global keyboard navigation
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // Don't handle if typing in search input
-      if (document.activeElement === searchInputRef.current && e.key !== "Escape" && e.key !== "ArrowDown" && e.key !== "ArrowUp") {
+      if (
+        document.activeElement === searchInputRef.current &&
+        e.key !== "Escape" &&
+        e.key !== "ArrowDown" &&
+        e.key !== "ArrowUp"
+      ) {
         return;
       }
 
@@ -79,6 +80,19 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
           setSelectedIndex((prev) => Math.max(prev - 1, 0));
           break;
         case "Enter":
+          if (document.activeElement !== searchInputRef.current) {
+            e.preventDefault();
+            const item = history[selectedIndex];
+            if (item?.type === "text" && item.text) {
+              const detected = detectContentType(item.text);
+              if (detected.type === "url") {
+                window.electronAPI.openExternalURL(item.text.trim());
+                return;
+              }
+            }
+            copySelectedItem();
+          }
+          break;
         case "c":
         case "C":
           if (document.activeElement !== searchInputRef.current) {
@@ -105,7 +119,9 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
 
   // Scroll selected item into view
   useEffect(() => {
-    const selectedElement = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
+    const selectedElement = listRef.current?.querySelector(
+      `[data-index="${selectedIndex}"]`
+    );
     selectedElement?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedIndex]);
 
@@ -228,7 +244,10 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             )}
           </div>
           {hasApiKey ? (
-            <p className="search-hint">Press Enter to search • ↑↓ Navigate • Enter/C to copy • / to search</p>
+            <p className="search-hint">
+              Press Enter to search • ↑↓ Navigate • Enter/C to copy • / to
+              search
+            </p>
           ) : (
             <p className="search-warning">
               OpenAI API key required. Configure in Settings to enable semantic
