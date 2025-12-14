@@ -101,7 +101,8 @@ async function createWindow() {
     transparent: true,
     resizable: false,
     frame: false,
-    hasShadow: false,
+    hasShadow: true,
+    roundedCorners: true,
     vibrancy: "fullscreen-ui",
     backgroundMaterial: "acrylic",
     webPreferences: {
