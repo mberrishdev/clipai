@@ -7,6 +7,7 @@ import {
   shell,
   globalShortcut,
   dialog,
+  net,
 } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -37,6 +38,60 @@ let configManager: ConfigManager | null = null;
 let databaseManager: DatabaseManager | null = null;
 let embeddingService: EmbeddingService | null = null;
 let isQuitting = false;
+
+const GITHUB_REPO = "mberrishdev/clipai";
+
+async function checkForUpdates(silent = false): Promise<void> {
+  try {
+    const currentVersion = app.getVersion();
+    log.info(`Checking for updates. Current version: ${currentVersion}`);
+
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`
+    );
+
+    if (!response.ok) {
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+
+    const release = await response.json();
+    const latestVersion = release.tag_name.replace(/^v/, "");
+
+    log.info(`Latest version: ${latestVersion}`);
+
+    if (latestVersion > currentVersion) {
+      const result = await dialog.showMessageBox({
+        type: "info",
+        title: "Update Available",
+        message: `A new version is available!`,
+        detail: `Current: v${currentVersion}\nLatest: v${latestVersion}\n\nWould you like to download it?`,
+        buttons: ["Download", "Later"],
+        defaultId: 0,
+      });
+
+      if (result.response === 0) {
+        shell.openExternal(release.html_url);
+      }
+    } else if (!silent) {
+      dialog.showMessageBox({
+        type: "info",
+        title: "No Updates",
+        message: "You're up to date!",
+        detail: `Current version: v${currentVersion}`,
+      });
+    }
+  } catch (error) {
+    log.error("Failed to check for updates:", error);
+    if (!silent) {
+      dialog.showMessageBox({
+        type: "error",
+        title: "Update Check Failed",
+        message: "Could not check for updates",
+        detail: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+}
 
 async function createWindow() {
   win = new BrowserWindow({
@@ -126,6 +181,23 @@ function createTray() {
         },
       },
       { type: "separator" },
+      {
+        label: "Check for Updates",
+        click: () => {
+          checkForUpdates(false);
+        },
+      },
+      {
+        label: "View Logs",
+        click: () => {
+          shell.openPath(log.transports.file.getFile().path);
+        },
+      },
+      { type: "separator" },
+      {
+        label: `Version ${app.getVersion()}`,
+        enabled: false,
+      },
       {
         label: "Quit",
         click: () => {
