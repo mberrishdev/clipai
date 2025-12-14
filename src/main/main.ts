@@ -6,6 +6,7 @@ import {
   Menu,
   shell,
   globalShortcut,
+  dialog,
 } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -255,26 +256,37 @@ function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
 app.whenReady().then(() => {
   log.info("App ready");
 
-  configManager = new ConfigManager();
-  databaseManager = new DatabaseManager();
-  embeddingService = new EmbeddingService(configManager);
+  try {
+    configManager = new ConfigManager();
+    databaseManager = new DatabaseManager();
+    embeddingService = new EmbeddingService(configManager);
 
-  app.setLoginItemSettings({
-    openAtLogin: true,
-  });
+    app.setLoginItemSettings({
+      openAtLogin: true,
+    });
 
-  if (app.dock) {
-    app.dock.hide();
-  }
+    if (app.dock) {
+      app.dock.hide();
+    }
 
-  createWindow();
-  createTray();
+    createWindow();
+    createTray();
 
-  const config = configManager.getConfig();
-  registerGlobalShortcut(config.globalShortcut);
+    const config = configManager.getConfig();
+    registerGlobalShortcut(config.globalShortcut);
 
-  if (!app.isPackaged) {
-    win?.show();
+    if (!app.isPackaged) {
+      win?.show();
+    }
+  } catch (error) {
+    log.error("Failed to start app:", error);
+    dialog.showErrorBox(
+      "Failed to Start",
+      `The application failed to start:\n\n${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+    app.quit();
   }
 });
 

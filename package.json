@@ -102,8 +102,11 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "sqlite-vec": "^0.1.7-alpha.2",
-    "sqlite-vec-darwin-arm64": "^0.1.7-alpha.2",
     "vite": "^7.2.7",
     "wait-on": "^9.0.3"
+  },
+  "optionalDependencies": {
+    "sqlite-vec-darwin-arm64": "^0.1.7-alpha.2",
+    "sqlite-vec-windows-x64": "^0.1.7-alpha.2"
   }
 }
