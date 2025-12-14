@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ClipboardItem as ClipboardItemType } from "../../models/ClipboardItem";
 import HistoryItemCard from "../components/ClipboardItem";
 import "./ClipboardHistory.css";
@@ -11,6 +11,9 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const performSearch = async () => {
     console.log("Search triggered for:", searchQuery);
@@ -42,6 +45,74 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
       performSearch();
     }
   };
+
+  const copySelectedItem = useCallback(async () => {
+    const item = history[selectedIndex];
+    if (!item) return;
+    
+    if (item.type === "text" && item.text) {
+      await navigator.clipboard.writeText(item.text);
+    } else if (item.type === "image" && item.image) {
+      const response = await fetch(item.image);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new (window as any).ClipboardItem({ [blob.type]: blob }),
+      ]);
+    }
+  }, [history, selectedIndex]);
+
+  // Global keyboard navigation
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if typing in search input
+      if (document.activeElement === searchInputRef.current && e.key !== "Escape" && e.key !== "ArrowDown" && e.key !== "ArrowUp") {
+        return;
+      }
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedIndex((prev) => Math.min(prev + 1, history.length - 1));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedIndex((prev) => Math.max(prev - 1, 0));
+          break;
+        case "Enter":
+        case "c":
+        case "C":
+          if (document.activeElement !== searchInputRef.current) {
+            e.preventDefault();
+            copySelectedItem();
+          }
+          break;
+        case "Escape":
+          e.preventDefault();
+          searchInputRef.current?.blur();
+          break;
+        case "/":
+          if (document.activeElement !== searchInputRef.current) {
+            e.preventDefault();
+            searchInputRef.current?.focus();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [history.length, copySelectedItem]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    const selectedElement = listRef.current?.querySelector(`[data-index="${selectedIndex}"]`);
+    selectedElement?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedIndex]);
+
+  // Reset selection when history changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [history.length]);
 
   useEffect(() => {
     window.electronAPI.getClipboardHistory().then((items) => {
@@ -120,11 +191,12 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
               />
             </svg>
             <input
+              ref={searchInputRef}
               type="text"
               className="search-input"
               placeholder={
                 hasApiKey
-                  ? "Search with AI..."
+                  ? "Search with AI... (press / to focus)"
                   : "Configure OpenAI API key in settings..."
               }
               value={searchQuery}
@@ -156,7 +228,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             )}
           </div>
           {hasApiKey ? (
-            <p className="search-hint">Press Enter to search</p>
+            <p className="search-hint">Press Enter to search • ↑↓ Navigate • Enter/C to copy • / to search</p>
           ) : (
             <p className="search-warning">
               OpenAI API key required. Configure in Settings to enable semantic
@@ -172,12 +244,14 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             </div>
           ) : (
             <>
-              <div className="history-list">
+              <div className="history-list" ref={listRef}>
                 {history.map((item, index) => (
                   <HistoryItemCard
                     key={item.id || index}
                     item={item}
                     index={index}
+                    isSelected={index === selectedIndex}
+                    onSelect={() => setSelectedIndex(index)}
                   />
                 ))}
               </div>

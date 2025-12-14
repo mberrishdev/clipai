@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.6] - 2024-12-14
+
+### Added
+- Keyboard navigation for clipboard history
+  - ↑/↓ arrows to navigate items
+  - Enter or C to copy selected item
+  - / to focus search input
+  - Escape to unfocus search
+- Visual highlight for selected item
+- Keyboard hints in search bar
+- Release script for easier publishing
+
 ## [0.0.5] - 2024-12-14
 
 ### Added

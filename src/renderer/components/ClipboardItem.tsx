@@ -18,6 +18,8 @@ interface ClipboardItemProps {
     timestamp: number;
   };
   index: number;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 function formatTimestamp(timestamp: number): string {
@@ -35,7 +37,7 @@ function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
-export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
+export default function HistoryItemCard({ item, index, isSelected, onSelect }: ClipboardItemProps) {
   const [detected, setDetected] = useState<DetectedContent | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -81,7 +83,11 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
 
   if (item.type === "image") {
     return (
-      <div className="history-item">
+      <div 
+        className={`history-item ${isSelected ? 'history-item--selected' : ''}`}
+        data-index={index}
+        onClick={onSelect}
+      >
         <div className="item-number">{index + 1}</div>
         <div className="item-content">
           <div className="item-header">
@@ -123,7 +129,11 @@ export default function HistoryItemCard({ item, index }: ClipboardItemProps) {
       : detected.formatted);
 
   return (
-    <div className="history-item">
+    <div 
+      className={`history-item ${isSelected ? 'history-item--selected' : ''}`}
+      data-index={index}
+      onClick={onSelect}
+    >
       <div className="item-number">{index + 1}</div>
       <div className="item-content">
         <div className="item-header">
