@@ -2,7 +2,6 @@ import Database from "better-sqlite3";
 import { app } from "electron";
 import { join } from "path";
 import log from "electron-log";
-import * as sqliteVec from "sqlite-vec";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 
 export class DatabaseManager {
@@ -23,13 +22,14 @@ export class DatabaseManager {
       log.info("Journal mode set");
 
       log.info("Loading sqlite-vec extension...");
+      const sqliteVec = require("sqlite-vec");
       let loadablePath = sqliteVec.getLoadablePath();
 
       // Fix path for Electron asar packaging
       if (loadablePath.includes('.asar')) {
         loadablePath = loadablePath.replace(
-          join('app.asar', 'node_modules'),
-          join('app.asar.unpacked', 'node_modules')
+          'app.asar' + (process.platform === 'win32' ? '\\' : '/') + 'node_modules',
+          'app.asar.unpacked' + (process.platform === 'win32' ? '\\' : '/') + 'node_modules'
         );
       }
 

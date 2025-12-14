@@ -15,7 +15,6 @@
         "react": "^19.2.1",
         "react-dom": "^19.2.1",
         "sqlite-vec": "^0.1.7-alpha.2",
-        "sqlite-vec-darwin-arm64": "^0.1.7-alpha.2",
         "vite": "^7.2.7",
         "wait-on": "^9.0.3",
       },
@@ -26,6 +25,10 @@
         "electron": "^39.2.6",
         "electron-builder": "^26.0.12",
         "electron-rebuild": "^3.2.9",
+      },
+      "optionalDependencies": {
+        "sqlite-vec-darwin-arm64": "^0.1.7-alpha.2",
+        "sqlite-vec-windows-x64": "^0.1.7-alpha.2",
       },
       "peerDependencies": {
         "typescript": "^5.9.3",

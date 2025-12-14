@@ -70,11 +70,23 @@ Download the latest release from the [Releases page](https://github.com/mberrish
 1. Download the `.dmg` file (choose `arm64` for Apple Silicon or `x64` for Intel Macs)
 2. Open the `.dmg` file
 3. Drag clipai to your Applications folder
-4. On first launch, you may see "clipai cannot be opened because it is from an unidentified developer"
-   - Right-click (or Control-click) on clipai in Applications
-   - Click "Open"
-   - Click "Open" again in the dialog
-   - This only needs to be done once
+4. **Important:** Remove macOS quarantine (required for unsigned apps)
+
+   Open Terminal and run:
+   ```bash
+   xattr -cr /Applications/clipai.app
+   ```
+
+   This is safe - it just removes the quarantine flag that macOS adds to downloaded files. Required because the app is not code-signed.
+
+5. Launch clipai from Applications
+
+**Alternative method if you see "unidentified developer" warning:**
+- Right-click (or Control-click) on clipai in Applications
+- Click "Open"
+- Click "Open" again in the dialog
+
+**Note:** If you see "app is damaged and can't be opened", you must use the Terminal command above.
 
 **Windows Users:**
 
