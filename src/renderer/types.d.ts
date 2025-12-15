@@ -18,6 +18,7 @@ export interface ElectronAPI {
   setGlobalShortcut: (shortcut: string) => Promise<{ success: boolean; error?: string }>;
   setOpenAIApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>;
   clearHistory: () => Promise<{ success: boolean; error?: string }>;
+  navigate: (page: string) => Promise<void>;
 }
 
 declare global {

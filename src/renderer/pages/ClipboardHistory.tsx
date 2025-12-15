@@ -110,6 +110,12 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             searchInputRef.current?.focus();
           }
           break;
+        case ",":
+          if (document.activeElement !== searchInputRef.current) {
+            e.preventDefault();
+            window.electronAPI.navigate("settings");
+          }
+          break;
       }
     };
 
@@ -244,7 +250,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             )}
           </div>
           <p className="search-hint">
-            {hasApiKey && "Press Enter to search • "}↑↓ Navigate • Enter/C to copy{hasApiKey && " • / to search"}
+            {hasApiKey && "Press Enter to search • "}↑↓ Navigate • Enter/C to copy{hasApiKey && " • / to search"} • , Settings
           </p>
         </div>
         <main className="content">

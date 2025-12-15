@@ -319,6 +319,12 @@ ipcMain.handle("clear-history", () => {
   }
 });
 
+ipcMain.handle("navigate-to", (_event, page: string) => {
+  if (win) {
+    win.webContents.send("navigate", page);
+  }
+});
+
 function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
   globalShortcut.unregisterAll();
 

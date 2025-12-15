@@ -23,4 +23,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   setOpenAIApiKey: (apiKey: string) =>
     ipcRenderer.invoke("set-openai-api-key", apiKey),
   clearHistory: () => ipcRenderer.invoke("clear-history"),
+  navigate: (page: string) => ipcRenderer.invoke("navigate-to", page),
 });
