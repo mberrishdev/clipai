@@ -1,6 +1,6 @@
 {
   "name": "clipai",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Modern clipboard history manager powered by AI",
   "author": "Mikheil Berishvili",
   "main": "dist/main/main.js",

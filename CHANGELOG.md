@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.8] - 2024-12-15
+
+### Added
+- `,` key shortcut to open Settings from clipboard history
+- Updated keyboard hints to show all available shortcuts
+
 ## [0.0.7] - 2024-12-15
 
 ### Added
