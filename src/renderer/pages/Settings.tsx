@@ -296,6 +296,33 @@ export default function Settings({
               </div>
             </div>
           </div>
+
+          <div className="setting-group">
+            <h2>Data</h2>
+            <div className="setting-item">
+              <div className="setting-info">
+                <label>Clear History</label>
+                <p>Delete all clipboard history permanently</p>
+              </div>
+              <div className="shortcut-control">
+                <button
+                  className="btn-danger"
+                  onClick={async () => {
+                    if (window.confirm("Are you sure you want to delete all clipboard history? This action cannot be undone.")) {
+                      const result = await window.electronAPI.clearHistory();
+                      if (result.success) {
+                        alert("History cleared successfully!");
+                      } else {
+                        alert("Failed to clear history: " + result.error);
+                      }
+                    }
+                  }}
+                >
+                  Clear All History
+                </button>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </>

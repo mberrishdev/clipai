@@ -468,6 +468,30 @@ body.opaque .settings {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Danger Button */
+.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+  background: rgba(239, 68, 68, 0.4);
+}
+
 /* Shortcut Keys (for display) */
 .shortcut-keys {
   display: flex;

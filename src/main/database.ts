@@ -16,7 +16,7 @@ export class DatabaseManager {
       log.info("Opening database...");
       this.db = new Database(dbPath);
       log.info("Database opened successfully");
-      
+
       log.info("Setting journal mode...");
       this.db.pragma("journal_mode = WAL");
       log.info("Journal mode set");
@@ -26,10 +26,14 @@ export class DatabaseManager {
       let loadablePath = sqliteVec.getLoadablePath();
 
       // Fix path for Electron asar packaging
-      if (loadablePath.includes('.asar')) {
+      if (loadablePath.includes(".asar")) {
         loadablePath = loadablePath.replace(
-          'app.asar' + (process.platform === 'win32' ? '\\' : '/') + 'node_modules',
-          'app.asar.unpacked' + (process.platform === 'win32' ? '\\' : '/') + 'node_modules'
+          "app.asar" +
+            (process.platform === "win32" ? "\\" : "/") +
+            "node_modules",
+          "app.asar.unpacked" +
+            (process.platform === "win32" ? "\\" : "/") +
+            "node_modules"
         );
       }
 
@@ -160,6 +164,11 @@ export class DatabaseManager {
     `);
 
     return stmt.all(`%${query}%`, limit) as ClipboardItem[];
+  }
+
+  clearAllHistory(): void {
+    this.db.exec("DELETE FROM clipboard_items");
+    log.info("Clipboard history cleared");
   }
 
   semanticSearch(

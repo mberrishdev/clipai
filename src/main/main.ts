@@ -303,6 +303,22 @@ ipcMain.handle("set-openai-api-key", (_event, apiKey: string) => {
   }
 });
 
+ipcMain.handle("clear-history", () => {
+  try {
+    if (!databaseManager) {
+      log.error("Database manager not initialized");
+      return { success: false, error: "Database not initialized" };
+    }
+    databaseManager.clearAllHistory();
+    clipboardManager?.clear();
+    log.info("History cleared by user");
+    return { success: true };
+  } catch (error) {
+    log.error("Failed to clear history:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
 function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
   globalShortcut.unregisterAll();
 

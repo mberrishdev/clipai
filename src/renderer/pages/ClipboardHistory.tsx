@@ -243,17 +243,9 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
               </button>
             )}
           </div>
-          {hasApiKey ? (
-            <p className="search-hint">
-              Press Enter to search • ↑↓ Navigate • Enter/C to copy • / to
-              search
-            </p>
-          ) : (
-            <p className="search-warning">
-              OpenAI API key required. Configure in Settings to enable semantic
-              search.
-            </p>
-          )}
+          <p className="search-hint">
+            {hasApiKey && "Press Enter to search • "}↑↓ Navigate • Enter/C to copy{hasApiKey && " • / to search"}
+          </p>
         </div>
         <main className="content">
           {history.length === 0 ? (

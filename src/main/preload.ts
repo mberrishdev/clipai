@@ -22,4 +22,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("set-global-shortcut", shortcut),
   setOpenAIApiKey: (apiKey: string) =>
     ipcRenderer.invoke("set-openai-api-key", apiKey),
+  clearHistory: () => ipcRenderer.invoke("clear-history"),
 });
