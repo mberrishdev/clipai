@@ -64,6 +64,22 @@ export class DatabaseManager {
 
       CREATE INDEX IF NOT EXISTS idx_timestamp ON clipboard_items(timestamp DESC);
       CREATE INDEX IF NOT EXISTS idx_type ON clipboard_items(type);
+
+      CREATE TABLE IF NOT EXISTS archived_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        text TEXT,
+        image TEXT,
+        timestamp INTEGER NOT NULL,
+        embedding BLOB,
+        archived_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_archived_timestamp ON archived_items(timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_archived_at ON archived_items(archived_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_archived_type ON archived_items(type);
     `);
     log.info("Database tables initialized");
   }
@@ -184,6 +200,115 @@ export class DatabaseManager {
         timestamp,
         vec_distance_cosine(embedding, vec_f32(?)) as distance
       FROM clipboard_items
+      WHERE embedding IS NOT NULL
+      ORDER BY distance ASC
+      LIMIT ?
+    `);
+
+    return stmt.all(JSON.stringify(queryEmbedding), limit) as ClipboardItem[];
+  }
+
+  archiveOldItems(retentionDays: number): number {
+    const cutoffTimestamp = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+
+    const insertStmt = this.db.prepare(`
+      INSERT INTO archived_items (original_id, type, text, image, timestamp, embedding, created_at)
+      SELECT id, type, text, image, timestamp, embedding, created_at
+      FROM clipboard_items
+      WHERE timestamp < ?
+    `);
+
+    const result = insertStmt.run(cutoffTimestamp);
+
+    if (result.changes > 0) {
+      const deleteStmt = this.db.prepare(`
+        DELETE FROM clipboard_items WHERE timestamp < ?
+      `);
+      deleteStmt.run(cutoffTimestamp);
+    }
+
+    log.info(
+      `Archived ${result.changes} items older than ${retentionDays} days`
+    );
+    return result.changes;
+  }
+
+  getArchivedItems(limit: number = 1000, offset: number = 0): ClipboardItem[] {
+    const stmt = this.db.prepare(`
+      SELECT id, type, text, image, timestamp
+      FROM archived_items
+      ORDER BY timestamp DESC
+      LIMIT ? OFFSET ?
+    `);
+
+    return stmt.all(limit, offset) as ClipboardItem[];
+  }
+
+  unarchiveItem(id: number): boolean {
+    const insertStmt = this.db.prepare(`
+      INSERT INTO clipboard_items (type, text, image, timestamp, embedding)
+      SELECT type, text, image, timestamp, embedding
+      FROM archived_items
+      WHERE id = ?
+    `);
+
+    const result = insertStmt.run(id);
+
+    if (result.changes > 0) {
+      const deleteStmt = this.db.prepare(`
+        DELETE FROM archived_items WHERE id = ?
+      `);
+      deleteStmt.run(id);
+      log.info(`Unarchived item ${id}`);
+      return true;
+    }
+
+    return false;
+  }
+
+  deleteArchivedItem(id: number): boolean {
+    const stmt = this.db.prepare("DELETE FROM archived_items WHERE id = ?");
+    const result = stmt.run(id);
+    if (result.changes > 0) {
+      log.info(`Permanently deleted archived item ${id}`);
+    }
+    return result.changes > 0;
+  }
+
+  clearArchive(): void {
+    this.db.exec("DELETE FROM archived_items");
+    log.info("All archived items cleared");
+  }
+
+  getArchiveStats(): { total: number; text: number; image: number } {
+    const result = this.db
+      .prepare(
+        `
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN type = 'text' THEN 1 ELSE 0 END) as text,
+          SUM(CASE WHEN type = 'image' THEN 1 ELSE 0 END) as image
+        FROM archived_items
+      `
+      )
+      .get() as { total: number; text: number; image: number };
+
+    return result;
+  }
+
+  semanticSearchArchive(
+    queryEmbedding: number[],
+    limit: number = 10
+  ): ClipboardItem[] {
+    const stmt = this.db.prepare(`
+      SELECT
+        id,
+        type,
+        text,
+        image,
+        timestamp,
+        vec_distance_cosine(embedding, vec_f32(?)) as distance
+      FROM archived_items
       WHERE embedding IS NOT NULL
       ORDER BY distance ASC
       LIMIT ?

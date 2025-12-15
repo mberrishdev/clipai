@@ -20,6 +20,10 @@ interface ClipboardItemProps {
   index: number;
   isSelected?: boolean;
   onSelect?: () => void;
+  // Archive actions
+  showArchiveActions?: boolean;
+  onUnarchive?: () => void;
+  onDelete?: () => void;
 }
 
 function formatTimestamp(timestamp: number): string {
@@ -37,7 +41,15 @@ function formatTimestamp(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
-export default function HistoryItemCard({ item, index, isSelected, onSelect }: ClipboardItemProps) {
+export default function HistoryItemCard({
+  item,
+  index,
+  isSelected,
+  onSelect,
+  showArchiveActions = false,
+  onUnarchive,
+  onDelete
+}: ClipboardItemProps) {
   const [detected, setDetected] = useState<DetectedContent | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -100,6 +112,24 @@ export default function HistoryItemCard({ item, index, isSelected, onSelect }: C
               >
                 {copied ? "✓" : "Copy"}
               </button>
+              {showArchiveActions && (
+                <>
+                  <button
+                    className="action-btn action-btn--unarchive"
+                    onClick={onUnarchive}
+                    title="Restore to active"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    className="action-btn action-btn--delete"
+                    onClick={onDelete}
+                    title="Delete permanently"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <img
@@ -156,6 +186,24 @@ export default function HistoryItemCard({ item, index, isSelected, onSelect }: C
               >
                 Copy Formatted
               </button>
+            )}
+            {showArchiveActions && (
+              <>
+                <button
+                  className="action-btn action-btn--unarchive"
+                  onClick={onUnarchive}
+                  title="Restore to active"
+                >
+                  Restore
+                </button>
+                <button
+                  className="action-btn action-btn--delete"
+                  onClick={onDelete}
+                  title="Delete permanently"
+                >
+                  Delete
+                </button>
+              </>
             )}
           </div>
         </div>

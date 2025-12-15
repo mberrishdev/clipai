@@ -62,10 +62,16 @@ export default function Settings({
   const [apiKeyError, setApiKeyError] = useState("");
   const [apiKeySuccess, setApiKeySuccess] = useState(false);
 
+  const [retentionPeriodDays, setRetentionPeriodDays] = useState(30);
+  const [isEditingRetention, setIsEditingRetention] = useState(false);
+  const [retentionError, setRetentionError] = useState("");
+  const [retentionSuccess, setRetentionSuccess] = useState(false);
+
   useEffect(() => {
     window.electronAPI.getConfig().then((config) => {
       setGlobalShortcut(config.globalShortcut);
       setOpenaiApiKey(config.openaiApiKey || "");
+      setRetentionPeriodDays(config.retentionPeriodDays);
     });
   }, []);
 
@@ -168,6 +174,34 @@ export default function Settings({
     setApiKeyError("");
     const config = await window.electronAPI.getConfig();
     setOpenaiApiKey(config.openaiApiKey || "");
+  };
+
+  const handleRetentionSave = async () => {
+    setRetentionError("");
+    setRetentionSuccess(false);
+
+    if (retentionPeriodDays < 1 || retentionPeriodDays > 365) {
+      setRetentionError("Retention period must be between 1 and 365 days");
+      return;
+    }
+
+    const result = await window.electronAPI.setRetentionPeriod(
+      retentionPeriodDays
+    );
+    if (result.success) {
+      setIsEditingRetention(false);
+      setRetentionSuccess(true);
+      setTimeout(() => setRetentionSuccess(false), 3000);
+    } else {
+      setRetentionError(result.error || "Failed to save retention period");
+    }
+  };
+
+  const handleRetentionCancel = async () => {
+    setIsEditingRetention(false);
+    setRetentionError("");
+    const config = await window.electronAPI.getConfig();
+    setRetentionPeriodDays(config.retentionPeriodDays);
   };
 
   return (
@@ -316,6 +350,59 @@ export default function Settings({
 
           <div className="setting-group">
             <h2>Data</h2>
+            <div className="setting-item">
+              <div className="setting-info">
+                <label>Retention Period</label>
+                <p>Automatically archive clipboard items after this many days</p>
+                {retentionError && (
+                  <p className="error-message">{retentionError}</p>
+                )}
+                {retentionSuccess && (
+                  <p className="success-message">
+                    Retention period saved successfully!
+                  </p>
+                )}
+              </div>
+              <div className="shortcut-control">
+                {isEditingRetention ? (
+                  <>
+                    <input
+                      type="number"
+                      className="shortcut-input"
+                      value={retentionPeriodDays}
+                      onChange={(e) =>
+                        setRetentionPeriodDays(parseInt(e.target.value) || 1)
+                      }
+                      placeholder="Days"
+                      min="1"
+                      max="365"
+                    />
+                    <button className="btn-primary" onClick={handleRetentionSave}>
+                      Save
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={handleRetentionCancel}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="shortcut-display">
+                      {retentionPeriodDays} days
+                    </span>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setIsEditingRetention(true)}
+                    >
+                      Change
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div className="setting-item">
               <div className="setting-info">
                 <label>Clear History</label>

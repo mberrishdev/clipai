@@ -28,7 +28,7 @@ export class ClipboardManager {
     this.loadHistoryFromDB();
   }
 
-  private loadHistoryFromDB() {
+  public loadHistoryFromDB() {
     try {
       const stats = this.db.getStats();
       log.info(`Database stats:`, stats);

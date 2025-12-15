@@ -7,12 +7,14 @@ export interface AppConfig {
   globalShortcut: string;
   transparency: boolean;
   openaiApiKey?: string;
+  retentionPeriodDays: number;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
   globalShortcut: "CommandOrControl+Shift+V",
   transparency: true,
   openaiApiKey: undefined,
+  retentionPeriodDays: 30,
 };
 
 export class ConfigManager {
@@ -78,6 +80,19 @@ export class ConfigManager {
 
   setOpenAIApiKey(apiKey: string): void {
     this.config.openaiApiKey = apiKey.trim();
+    this.saveConfig();
+  }
+
+  getRetentionPeriodDays(): number {
+    return this.config.retentionPeriodDays;
+  }
+
+  setRetentionPeriodDays(days: number): void {
+    // Validate: minimum 1 day, maximum 365 days
+    if (days < 1 || days > 365) {
+      throw new Error("Retention period must be between 1 and 365 days");
+    }
+    this.config.retentionPeriodDays = days;
     this.saveConfig();
   }
 }

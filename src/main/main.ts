@@ -181,6 +181,14 @@ function createTray() {
         },
       },
       {
+        label: "Archive",
+        click: () => {
+          win?.show();
+          win?.focus();
+          win?.webContents.send("navigate", "archive");
+        },
+      },
+      {
         label: "Settings",
         click: () => {
           win?.show();
@@ -330,6 +338,101 @@ ipcMain.handle("navigate-to", (_event, page: string) => {
   }
 });
 
+// Archive-related IPC handlers
+ipcMain.handle(
+  "get-archived-history",
+  (_event, limit: number = 50, offset: number = 0) => {
+    return databaseManager?.getArchivedItems(limit, offset) || [];
+  }
+);
+
+ipcMain.handle("unarchive-item", (_event, id: number) => {
+  try {
+    if (!databaseManager) {
+      return { success: false, error: "Database not initialized" };
+    }
+    const success = databaseManager.unarchiveItem(id);
+    if (success) {
+      // Reload clipboard manager's history
+      clipboardManager?.loadHistoryFromDB();
+    }
+    return { success };
+  } catch (error) {
+    log.error("Failed to unarchive item:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle("delete-archived-item", (_event, id: number) => {
+  try {
+    if (!databaseManager) {
+      return { success: false, error: "Database not initialized" };
+    }
+    const success = databaseManager.deleteArchivedItem(id);
+    return { success };
+  } catch (error) {
+    log.error("Failed to delete archived item:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle("clear-archive", () => {
+  try {
+    if (!databaseManager) {
+      return { success: false, error: "Database not initialized" };
+    }
+    databaseManager.clearArchive();
+    return { success: true };
+  } catch (error) {
+    log.error("Failed to clear archive:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle("set-retention-period", (_event, days: number) => {
+  try {
+    configManager?.setRetentionPeriodDays(days);
+    return { success: true };
+  } catch (error) {
+    log.error("Failed to set retention period:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle("archive-old-items", () => {
+  try {
+    if (!databaseManager || !configManager) {
+      return { success: false, error: "Services not initialized" };
+    }
+    const retentionDays = configManager.getRetentionPeriodDays();
+    const count = databaseManager.archiveOldItems(retentionDays);
+
+    // Reload clipboard manager to reflect changes
+    clipboardManager?.loadHistoryFromDB();
+
+    return { success: true, count };
+  } catch (error) {
+    log.error("Failed to archive items:", error);
+    return { success: false, error: String(error) };
+  }
+});
+
+ipcMain.handle(
+  "semantic-search-archive",
+  async (_event, query: string, limit: number = 10) => {
+    try {
+      if (!databaseManager || !embeddingService) {
+        throw new Error("Services not initialized");
+      }
+      const queryEmbedding = await embeddingService.getEmbedding(query);
+      return databaseManager.semanticSearchArchive(queryEmbedding, limit);
+    } catch (error) {
+      log.error("Failed to perform archive semantic search:", error);
+      throw error;
+    }
+  }
+);
+
 function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
   globalShortcut.unregisterAll();
 
@@ -370,6 +473,10 @@ app.whenReady().then(() => {
     configManager = new ConfigManager();
     databaseManager = new DatabaseManager();
     embeddingService = new EmbeddingService(configManager);
+
+    const retentionDays = configManager.getRetentionPeriodDays();
+    const archivedCount = databaseManager.archiveOldItems(retentionDays);
+    log.info(`Auto-archival complete: ${archivedCount} items archived`);
 
     app.setLoginItemSettings({
       openAtLogin: true,

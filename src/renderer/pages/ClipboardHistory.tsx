@@ -16,6 +16,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+
   const performSearch = async () => {
     if (searchQuery.trim()) {
       setIsLoading(true);
@@ -116,6 +117,13 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             window.electronAPI.navigate("settings");
           }
           break;
+        case "a":
+        case "A":
+          if (document.activeElement !== searchInputRef.current) {
+            e.preventDefault();
+            window.electronAPI.navigate("archive");
+          }
+          break;
       }
     };
 
@@ -175,6 +183,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
       setIsLoading(false);
     }
   };
+
 
   return (
     <>
@@ -250,7 +259,7 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
             )}
           </div>
           <p className="search-hint">
-            {hasApiKey && "Press Enter to search • "}↑↓ Navigate • Enter/C to copy{hasApiKey && " • / to search"} • , Settings
+            {hasApiKey && "Press Enter to search • "}↑↓ Navigate • Enter/C to copy{hasApiKey && " • / to search"} • , Settings • A Archive
           </p>
         </div>
         <main className="content">

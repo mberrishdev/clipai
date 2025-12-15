@@ -4,6 +4,7 @@ export interface AppConfig {
   globalShortcut: string;
   transparency: boolean;
   openaiApiKey?: string;
+  retentionPeriodDays: number;
 }
 
 export interface ElectronAPI {
@@ -19,6 +20,14 @@ export interface ElectronAPI {
   setOpenAIApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>;
   clearHistory: () => Promise<{ success: boolean; error?: string }>;
   navigate: (page: string) => Promise<void>;
+  // Archive methods
+  getArchivedHistory: (limit: number, offset: number) => Promise<ClipboardItem[]>;
+  unarchiveItem: (id: number) => Promise<{ success: boolean; error?: string }>;
+  deleteArchivedItem: (id: number) => Promise<{ success: boolean; error?: string }>;
+  clearArchive: () => Promise<{ success: boolean; error?: string }>;
+  setRetentionPeriod: (days: number) => Promise<{ success: boolean; error?: string }>;
+  archiveOldItems: () => Promise<{ success: boolean; count?: number; error?: string }>;
+  semanticSearchArchive: (query: string, limit?: number) => Promise<ClipboardItem[]>;
 }
 
 declare global {

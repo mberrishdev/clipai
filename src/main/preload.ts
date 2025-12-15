@@ -24,4 +24,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("set-openai-api-key", apiKey),
   clearHistory: () => ipcRenderer.invoke("clear-history"),
   navigate: (page: string) => ipcRenderer.invoke("navigate-to", page),
+  // Archive methods
+  getArchivedHistory: (limit: number, offset: number) =>
+    ipcRenderer.invoke("get-archived-history", limit, offset),
+  unarchiveItem: (id: number) => ipcRenderer.invoke("unarchive-item", id),
+  deleteArchivedItem: (id: number) =>
+    ipcRenderer.invoke("delete-archived-item", id),
+  clearArchive: () => ipcRenderer.invoke("clear-archive"),
+  setRetentionPeriod: (days: number) =>
+    ipcRenderer.invoke("set-retention-period", days),
+  archiveOldItems: () => ipcRenderer.invoke("archive-old-items"),
+  semanticSearchArchive: (query: string, limit?: number) =>
+    ipcRenderer.invoke("semantic-search-archive", query, limit),
 });

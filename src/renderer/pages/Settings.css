@@ -53,7 +53,7 @@ body.opaque .settings {
 
 /* Header */
 .settings-header {
-  padding: 1rem 1.5rem;
+  padding: 0.625rem 1.25rem;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -70,7 +70,7 @@ body.opaque .settings {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }

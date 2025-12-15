@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import ClipboardHistory from "./pages/ClipboardHistory";
 import Settings from "./pages/Settings";
+import Archive from "./pages/Archive";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<"history" | "settings">(
+  const [currentPage, setCurrentPage] = useState<"history" | "settings" | "archive">(
     "history"
   );
   const [isTransparent, setIsTransparent] = useState(false);
 
   useEffect(() => {
     window.electronAPI.onNavigate((page) => {
-      setCurrentPage(page as "history" | "settings");
+      setCurrentPage(page as "history" | "settings" | "archive");
     });
   }, []);
 
@@ -27,6 +28,7 @@ export default function App() {
           onTransparencyChange={setIsTransparent}
         />
       )}
+      {currentPage === "archive" && <Archive />}
     </>
   );
 }
