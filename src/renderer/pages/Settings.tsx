@@ -92,6 +92,22 @@ export default function Settings({
     }
   }, [isRecordingShortcut, handleKeyDown]);
 
+  // Handle comma key to go back to history
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if recording shortcut or editing API key
+      if (isRecordingShortcut || isEditingApiKey) return;
+      
+      if (e.key === ",") {
+        e.preventDefault();
+        window.electronAPI.navigate("history");
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isRecordingShortcut, isEditingApiKey]);
+
   const handleTransparencyChange = (value: boolean) => {
     onTransparencyChange(value);
     window.electronAPI.setTransparency(value);
@@ -172,6 +188,7 @@ export default function Settings({
       <div className="settings">
         <header className="settings-header">
           <h1>Settings</h1>
+          <p className="settings-hint">Press , to go back</p>
         </header>
         <main className="settings-content">
           <div className="setting-group">

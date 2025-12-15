@@ -75,6 +75,12 @@ body.opaque .settings {
   letter-spacing: -0.02em;
 }
 
+.settings-hint {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .back-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
