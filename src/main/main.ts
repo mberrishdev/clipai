@@ -149,7 +149,8 @@ async function createWindow() {
   clipboardManager = new ClipboardManager(
     win,
     databaseManager!,
-    embeddingService!
+    embeddingService!,
+    configManager!
   );
   clipboardManager.start();
 }

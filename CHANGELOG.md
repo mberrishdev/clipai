@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.7] - 2024-12-15
+
+### Added
+- Enter key opens URLs in browser (instead of copying)
+- C key always copies selected item
+
+### Fixed
+- Clipboard history now saves items even without OpenAI API key configured
+- Items without API key save with empty embedding (semantic search disabled until key added)
+
+### Changed
+- macOS builds now arm64 only (removed Intel x64)
+
 ## [0.0.6] - 2024-12-14
 
 ### Added

@@ -4,7 +4,7 @@
 
 ### 1. Update version
 ```bash
-npm version patch --no-git-tag-version
+bun release:patch
 ```
 - `patch`: 0.0.4 → 0.0.5 (bug fixes)
 - `minor`: 0.0.4 → 0.1.0 (new features)

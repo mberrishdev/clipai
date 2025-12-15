@@ -72,6 +72,10 @@ export class ConfigManager {
     return this.config.openaiApiKey;
   }
 
+  isApiKeyConfigured(): boolean {
+    return !!this.config.openaiApiKey;
+  }
+
   setOpenAIApiKey(apiKey: string): void {
     this.config.openaiApiKey = apiKey.trim();
     this.saveConfig();

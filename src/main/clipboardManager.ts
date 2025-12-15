@@ -1,8 +1,9 @@
-import { clipboard, BrowserWindow } from "electron";
+import { clipboard, BrowserWindow, type Config } from "electron";
 import type { ClipboardItem } from "../models/ClipboardItem.ts";
 import type { DatabaseManager } from "./database.ts";
 import log from "electron-log";
 import type { EmbeddingService } from "./embeddingService.ts";
+import type { ConfigManager } from "./configManager.ts";
 
 export class ClipboardManager {
   private history: ClipboardItem[] = [];
@@ -12,15 +13,18 @@ export class ClipboardManager {
   private window: BrowserWindow | null = null;
   private db: DatabaseManager;
   private embeddingService: EmbeddingService;
+  private configManager: ConfigManager;
 
   constructor(
     window: BrowserWindow,
     database: DatabaseManager,
-    embeddingService: EmbeddingService
+    embeddingService: EmbeddingService,
+    configManager: ConfigManager
   ) {
     this.window = window;
     this.db = database;
     this.embeddingService = embeddingService;
+    this.configManager = configManager;
     this.loadHistoryFromDB();
   }
 
@@ -103,9 +107,12 @@ export class ClipboardManager {
         if (trimmedText && text !== this.lastClipboardText) {
           this.lastClipboardText = text;
 
-          const embedding = await this.embeddingService.getEmbedding(
-            trimmedText
-          );
+          let embedding: number[] | undefined;
+          if (this.configManager.isApiKeyConfigured()) {
+            embedding = await this.embeddingService.getEmbedding(trimmedText);
+          } else {
+            embedding = undefined;
+          }
 
           const item: ClipboardItem = {
             type: "text",

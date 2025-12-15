@@ -1,6 +1,6 @@
 {
   "name": "clipai",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Modern clipboard history manager powered by AI",
   "author": "Mikheil Berishvili",
   "main": "dist/main/main.js",
@@ -21,7 +21,9 @@
     "package:all": "bun run build && electron-builder --mac --win",
     "package:dir": "bun run build && electron-builder --dir",
     "rebuild": "electron-rebuild",
-    "release": "npm version patch --no-git-tag-version"
+    "release:patch": "npm version patch --no-git-tag-version",
+    "release:minor": "npm version minor --no-git-tag-version",
+    "release:major": "npm version major --no-git-tag-version"
   },
   "build": {
     "appId": "com.clipai.app",
