@@ -12,8 +12,8 @@ body.transparent .settings {
   position: relative;
   background: linear-gradient(
     180deg,
-    rgba(15, 15, 25, 0.85) 0%,
-    rgba(20, 20, 35, 0.9) 100%
+    rgba(15, 15, 25, 0.65) 0%,
+    rgba(20, 20, 35, 0.75) 100%
   );
 }
 
@@ -22,8 +22,8 @@ body.transparent .settings::before {
   position: absolute;
   inset: 0;
   z-index: -1;
-  backdrop-filter: blur(80px) saturate(180%);
-  -webkit-backdrop-filter: blur(80px) saturate(180%);
+  backdrop-filter: blur(120px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(120px) saturate(200%) brightness(1.1);
   border-radius: 12px;
 }
 
@@ -34,12 +34,15 @@ body.transparent .settings::after {
   z-index: 0;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.05) 50%,
-    rgba(255, 255, 255, 0.02) 100%
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
   );
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   pointer-events: none;
 }
 
@@ -54,10 +57,11 @@ body.opaque .settings {
 /* Header */
 .settings-header {
   padding: 0.625rem 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -91,12 +95,15 @@ body.opaque .settings {
   font-size: 0.875rem;
   transition: all 0.2s ease;
   font-weight: 500;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Content */
@@ -124,20 +131,23 @@ body.opaque .settings {
 
 /* Setting Items */
 .setting-item {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   padding: 1.25rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.75rem;
   transition: all 0.2s ease;
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .setting-item:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .setting-info {
@@ -222,8 +232,8 @@ body.opaque .settings {
 
 /* Input Fields */
 .setting-input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   padding: 0.75rem 1rem;
   color: rgba(255, 255, 255, 0.95);
@@ -231,12 +241,15 @@ body.opaque .settings {
   width: 100%;
   outline: none;
   transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .setting-input:focus {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2),
+              inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .setting-input::placeholder {
