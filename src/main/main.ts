@@ -8,6 +8,7 @@ import {
   globalShortcut,
   dialog,
   net,
+  screen,
 } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -111,6 +112,10 @@ async function createWindow() {
       nodeIntegration: false,
     },
   });
+
+  if (process.platform === "darwin") {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
     callback({
@@ -334,6 +339,15 @@ function registerGlobalShortcut(shortcut: string = "CommandOrControl+Shift+V") {
       if (win.isVisible()) {
         win.hide();
       } else {
+        const cursorPoint = screen.getCursorScreenPoint();
+        const display = screen.getDisplayNearestPoint(cursorPoint);
+        const { x, y, width, height } = display.workArea;
+
+        const winBounds = win.getBounds();
+        const newX = Math.round(x + (width - winBounds.width) / 2);
+        const newY = Math.round(y + (height - winBounds.height) / 2);
+
+        win.setPosition(newX, newY);
         win.show();
         win.focus();
       }
