@@ -12,6 +12,8 @@ import {
 } from "electron";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { ClipboardManager } from "./clipboardManager.ts";
 import { ConfigManager } from "./configManager.ts";
 import { DatabaseManager } from "./database.ts";
@@ -276,6 +278,52 @@ ipcMain.handle("open-external-url", async (_event, url: string) => {
     await shell.openExternal(url);
   } catch (error) {
     log.error("Failed to open external URL:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle("open-image-in-viewer", async (_event, dataURL: string) => {
+  try {
+    if (!dataURL || typeof dataURL !== "string") {
+      throw new Error("Invalid data URL: must be a non-empty string");
+    }
+
+    const matches = dataURL.match(/^data:(.+?);base64,(.+)$/);
+    if (!matches || matches.length < 3) {
+      log.error("Failed to parse data URL. Format:", dataURL.substring(0, 50));
+      throw new Error(
+        "Invalid data URL format. Expected format: data:image/...;base64,..."
+      );
+    }
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+
+    if (!base64Data || base64Data.length === 0) {
+      throw new Error("Empty base64 data");
+    }
+
+    const buffer = Buffer.from(base64Data, "base64");
+
+    if (buffer.length === 0 || mimeType === undefined) {
+      throw new Error("Failed to decode base64 data");
+    }
+
+    const extension = mimeType.split("/")[1] || "png";
+    const tempFilePath = join(tmpdir(), `clipboard-${Date.now()}.${extension}`);
+
+    writeFileSync(tempFilePath, buffer);
+    log.info("Image saved to:", tempFilePath);
+
+    const result = await shell.openPath(tempFilePath);
+    if (result) {
+      log.error("Failed to open image:", result);
+      throw new Error(result);
+    }
+
+    log.info("Image opened successfully");
+  } catch (error) {
+    log.error("Failed to open image in viewer:", error);
     throw error;
   }
 });

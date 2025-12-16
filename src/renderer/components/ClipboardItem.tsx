@@ -93,6 +93,17 @@ export default function HistoryItemCard({
     }
   };
 
+  const handleImageClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.image) {
+      try {
+        await window.electronAPI.openImageInViewer(item.image);
+      } catch (error) {
+        console.error("Failed to open image:", error);
+      }
+    }
+  };
+
   if (item.type === "image") {
     return (
       <div 
@@ -136,6 +147,7 @@ export default function HistoryItemCard({
             src={item.image}
             alt="Clipboard"
             className="item-image"
+            onClick={handleImageClick}
           />
           <div className="item-timestamp">
             {formatTimestamp(item.timestamp)}

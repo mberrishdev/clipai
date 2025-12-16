@@ -15,6 +15,7 @@ export interface ElectronAPI {
   onNavigate: (callback: (page: string) => void) => void;
   setTransparency: (enabled: boolean) => Promise<void>;
   openExternalURL: (url: string) => Promise<void>;
+  openImageInViewer: (dataURL: string) => Promise<void>;
   getConfig: () => Promise<AppConfig>;
   setGlobalShortcut: (shortcut: string) => Promise<{ success: boolean; error?: string }>;
   setOpenAIApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>;

@@ -84,6 +84,10 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
           if (document.activeElement !== searchInputRef.current) {
             e.preventDefault();
             const item = history[selectedIndex];
+            if (item?.type === "image" && item.image) {
+              window.electronAPI.openImageInViewer(item.image);
+              return;
+            }
             if (item?.type === "text" && item.text) {
               const detected = detectContentType(item.text);
               if (detected.type === "url") {
