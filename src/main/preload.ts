@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("open-external-url", url),
   openImageInViewer: (dataURL: string) =>
     ipcRenderer.invoke("open-image-in-viewer", dataURL),
+  openFileByPath: (filePath: string) =>
+    ipcRenderer.invoke("open-file-by-path", filePath),
   getConfig: () => ipcRenderer.invoke("get-config"),
   setGlobalShortcut: (shortcut: string) =>
     ipcRenderer.invoke("set-global-shortcut", shortcut),

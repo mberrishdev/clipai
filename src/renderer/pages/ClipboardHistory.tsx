@@ -16,7 +16,6 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-
   const performSearch = async () => {
     if (searchQuery.trim()) {
       setIsLoading(true);
@@ -84,6 +83,10 @@ export default function ClipboardHistory({}: ClipboardHistoryProps) {
           if (document.activeElement !== searchInputRef.current) {
             e.preventDefault();
             const item = history[selectedIndex];
+            if (item?.type === "file" && item.filePath) {
+              window.electronAPI.openFileByPath(item.filePath);
+              return;
+            }
             if (item?.type === "image" && item.image) {
               window.electronAPI.openImageInViewer(item.image);
               return;

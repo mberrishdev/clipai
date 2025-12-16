@@ -328,6 +328,28 @@ ipcMain.handle("open-image-in-viewer", async (_event, dataURL: string) => {
   }
 });
 
+ipcMain.handle("open-file-by-path", async (_event, filePath: string) => {
+  try {
+    if (!filePath || typeof filePath !== "string") {
+      throw new Error("Invalid file path: must be a non-empty string");
+    }
+
+    log.info("Opening file:", filePath);
+
+    // Open the file with the default application
+    const result = await shell.openPath(filePath);
+    if (result) {
+      log.error("Failed to open file:", result);
+      throw new Error(result);
+    }
+
+    log.info("File opened successfully");
+  } catch (error) {
+    log.error("Failed to open file:", error);
+    throw error;
+  }
+});
+
 ipcMain.handle("get-config", () => {
   return (
     configManager?.getConfig() || {

@@ -16,6 +16,7 @@ export interface ElectronAPI {
   setTransparency: (enabled: boolean) => Promise<void>;
   openExternalURL: (url: string) => Promise<void>;
   openImageInViewer: (dataURL: string) => Promise<void>;
+  openFileByPath: (filePath: string) => Promise<void>;
   getConfig: () => Promise<AppConfig>;
   setGlobalShortcut: (shortcut: string) => Promise<{ success: boolean; error?: string }>;
   setOpenAIApiKey: (apiKey: string) => Promise<{ success: boolean; error?: string }>;

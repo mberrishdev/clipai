@@ -57,6 +57,8 @@ export class DatabaseManager {
         type TEXT NOT NULL,
         text TEXT,
         image TEXT,
+        file_path TEXT,
+        file_name TEXT,
         timestamp INTEGER NOT NULL,
         embedding BLOB,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -71,6 +73,8 @@ export class DatabaseManager {
         type TEXT NOT NULL,
         text TEXT,
         image TEXT,
+        file_path TEXT,
+        file_name TEXT,
         timestamp INTEGER NOT NULL,
         embedding BLOB,
         archived_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -81,6 +85,36 @@ export class DatabaseManager {
       CREATE INDEX IF NOT EXISTS idx_archived_at ON archived_items(archived_at DESC);
       CREATE INDEX IF NOT EXISTS idx_archived_type ON archived_items(type);
     `);
+
+    // Add columns to existing tables if they don't exist
+    try {
+      this.db.exec(`ALTER TABLE clipboard_items ADD COLUMN file_path TEXT`);
+      log.info("Added file_path column to clipboard_items");
+    } catch (error) {
+      // Column already exists, ignore
+    }
+
+    try {
+      this.db.exec(`ALTER TABLE clipboard_items ADD COLUMN file_name TEXT`);
+      log.info("Added file_name column to clipboard_items");
+    } catch (error) {
+      // Column already exists, ignore
+    }
+
+    try {
+      this.db.exec(`ALTER TABLE archived_items ADD COLUMN file_path TEXT`);
+      log.info("Added file_path column to archived_items");
+    } catch (error) {
+      // Column already exists, ignore
+    }
+
+    try {
+      this.db.exec(`ALTER TABLE archived_items ADD COLUMN file_name TEXT`);
+      log.info("Added file_name column to archived_items");
+    } catch (error) {
+      // Column already exists, ignore
+    }
+
     log.info("Database tables initialized");
   }
 
@@ -88,8 +122,8 @@ export class DatabaseManager {
     // If embedding exists, insert with vec_f32, otherwise insert without it
     if (item.embedding && item.embedding.length > 0) {
       const stmt = this.db.prepare(`
-        INSERT INTO clipboard_items (type, text, image, timestamp, embedding)
-        VALUES (?, ?, ?, ?, vec_f32(?))
+        INSERT INTO clipboard_items (type, text, image, file_path, file_name, timestamp, embedding)
+        VALUES (?, ?, ?, ?, ?, ?, vec_f32(?))
       `);
 
       const embeddingBlob = Buffer.from(
@@ -100,6 +134,8 @@ export class DatabaseManager {
         item.type,
         item.text || null,
         item.image || null,
+        item.filePath || null,
+        item.fileName || null,
         item.timestamp,
         embeddingBlob
       );
@@ -107,14 +143,16 @@ export class DatabaseManager {
       return result.lastInsertRowid as number;
     } else {
       const stmt = this.db.prepare(`
-        INSERT INTO clipboard_items (type, text, image, timestamp)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO clipboard_items (type, text, image, file_path, file_name, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
 
       const result = stmt.run(
         item.type,
         item.text || null,
         item.image || null,
+        item.filePath || null,
+        item.fileName || null,
         item.timestamp
       );
 
@@ -124,7 +162,7 @@ export class DatabaseManager {
 
   getItems(limit: number = 1000, offset: number = 0): ClipboardItem[] {
     const stmt = this.db.prepare(`
-      SELECT id, type, text, image, timestamp
+      SELECT id, type, text, image, file_path as filePath, file_name as fileName, timestamp
       FROM clipboard_items
       ORDER BY timestamp DESC
       LIMIT ? OFFSET ?
@@ -135,7 +173,7 @@ export class DatabaseManager {
 
   getItemById(id: number): ClipboardItem | undefined {
     const stmt = this.db.prepare(`
-      SELECT id, type, text, image, timestamp
+      SELECT id, type, text, image, file_path as filePath, file_name as fileName, timestamp
       FROM clipboard_items
       WHERE id = ?
     `);
@@ -172,7 +210,7 @@ export class DatabaseManager {
 
   searchItems(query: string, limit: number = 100): ClipboardItem[] {
     const stmt = this.db.prepare(`
-      SELECT id, type, text, image, timestamp
+      SELECT id, type, text, image, file_path as filePath, file_name as fileName, timestamp
       FROM clipboard_items
       WHERE text LIKE ?
       ORDER BY timestamp DESC
@@ -197,6 +235,8 @@ export class DatabaseManager {
         type,
         text,
         image,
+        file_path as filePath,
+        file_name as fileName,
         timestamp,
         vec_distance_cosine(embedding, vec_f32(?)) as distance
       FROM clipboard_items
@@ -212,8 +252,8 @@ export class DatabaseManager {
     const cutoffTimestamp = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
 
     const insertStmt = this.db.prepare(`
-      INSERT INTO archived_items (original_id, type, text, image, timestamp, embedding, created_at)
-      SELECT id, type, text, image, timestamp, embedding, created_at
+      INSERT INTO archived_items (original_id, type, text, image, file_path, file_name, timestamp, embedding, created_at)
+      SELECT id, type, text, image, file_path, file_name, timestamp, embedding, created_at
       FROM clipboard_items
       WHERE timestamp < ?
     `);
@@ -235,7 +275,7 @@ export class DatabaseManager {
 
   getArchivedItems(limit: number = 1000, offset: number = 0): ClipboardItem[] {
     const stmt = this.db.prepare(`
-      SELECT id, type, text, image, timestamp
+      SELECT id, type, text, image, file_path as filePath, file_name as fileName, timestamp
       FROM archived_items
       ORDER BY timestamp DESC
       LIMIT ? OFFSET ?
@@ -246,8 +286,8 @@ export class DatabaseManager {
 
   unarchiveItem(id: number): boolean {
     const insertStmt = this.db.prepare(`
-      INSERT INTO clipboard_items (type, text, image, timestamp, embedding)
-      SELECT type, text, image, timestamp, embedding
+      INSERT INTO clipboard_items (type, text, image, file_path, file_name, timestamp, embedding)
+      SELECT type, text, image, file_path, file_name, timestamp, embedding
       FROM archived_items
       WHERE id = ?
     `);
@@ -306,6 +346,8 @@ export class DatabaseManager {
         type,
         text,
         image,
+        file_path as filePath,
+        file_name as fileName,
         timestamp,
         vec_distance_cosine(embedding, vec_f32(?)) as distance
       FROM archived_items

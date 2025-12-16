@@ -9,6 +9,7 @@ export class ClipboardManager {
   private history: ClipboardItem[] = [];
   private lastClipboardText = "";
   private lastClipboardImage = "";
+  private lastClipboardFile = "";
   private intervalId: NodeJS.Timeout | null = null;
   private window: BrowserWindow | null = null;
   private db: DatabaseManager;
@@ -44,6 +45,8 @@ export class ClipboardManager {
           this.lastClipboardText = lastItem.text;
         } else if (lastItem && lastItem.type === "image" && lastItem.image) {
           this.lastClipboardImage = lastItem.image;
+        } else if (lastItem && lastItem.type === "file" && lastItem.filePath) {
+          this.lastClipboardFile = lastItem.filePath;
         }
       }
     } catch (error) {
@@ -68,6 +71,121 @@ export class ClipboardManager {
 
   start() {
     this.intervalId = setInterval(async () => {
+      const availableFormats = clipboard.availableFormats();
+
+      // Check for files FIRST (PDFs and other files have image previews, so check file path before image)
+      try {
+        if (
+          process.platform === "darwin" &&
+          clipboard.has("public.file-url")
+        ) {
+          const buffer = clipboard.readBuffer("public.file-url");
+          if (buffer && buffer.length > 0) {
+            // Convert buffer to file path (remove file:// prefix and decode URI)
+            let filePath = buffer.toString("utf8").trim();
+
+            // Remove any null bytes
+            filePath = filePath.replace(/\0/g, "");
+            // Decode URL encoding
+            if (filePath.startsWith("file://")) {
+              filePath = decodeURIComponent(filePath.substring(7));
+            }
+
+            // Skip temporary file paths - look for real path in NSFilenamesPboardType
+            if (filePath.startsWith("/.file/")) {
+              let realFilePath = null;
+
+              // Try macOS NSFilenamesPboardType (contains real file path as XML plist)
+              if (clipboard.has("NSFilenamesPboardType")) {
+                try {
+                  const buffer = clipboard.readBuffer("NSFilenamesPboardType");
+                  if (buffer && buffer.length > 0) {
+                    const xmlContent = buffer.toString("utf8");
+                    // Parse the XML plist to extract file path
+                    // Format: <array><string>/path/to/file.pdf</string></array>
+                    const stringMatch = xmlContent.match(/<string>([^<]+)<\/string>/);
+                    if (stringMatch && stringMatch[1]) {
+                      realFilePath = stringMatch[1].trim();
+                    }
+                  }
+                } catch (error) {
+                  log.error("Error reading NSFilenamesPboardType:", error);
+                }
+              }
+
+              if (realFilePath) {
+                if (realFilePath !== this.lastClipboardFile) {
+                  this.lastClipboardFile = realFilePath;
+                  const fileName = realFilePath.split("/").pop() || realFilePath;
+
+                  const item: ClipboardItem = {
+                    type: "file",
+                    filePath: realFilePath,
+                    fileName,
+                    timestamp: Date.now(),
+                    embedding: [],
+                  };
+
+                  try {
+                    const id = this.db.addItem(item);
+                    item.id = id;
+                    this.history.unshift(item);
+
+                    if (this.window) {
+                      this.window.webContents.send("clipboard-update", item);
+                    }
+                    log.info(`File saved: ${fileName}`);
+                  } catch (error) {
+                    log.error("Failed to save file to database:", error);
+                    this.history.unshift(item);
+                    if (this.window) {
+                      this.window.webContents.send("clipboard-update", item);
+                    }
+                  }
+                  return;
+                }
+              }
+              // Could not find real file path, skip to avoid saving preview image
+              return;
+            } else if (filePath && filePath !== this.lastClipboardFile) {
+              this.lastClipboardFile = filePath;
+              const fileName = filePath.split("/").pop() || filePath;
+
+              const item: ClipboardItem = {
+                type: "file",
+                filePath,
+                fileName,
+                timestamp: Date.now(),
+                embedding: [],
+              };
+
+              try {
+                const id = this.db.addItem(item);
+                item.id = id;
+                this.history.unshift(item);
+
+                if (this.window) {
+                  this.window.webContents.send("clipboard-update", item);
+                }
+                log.info(`File saved: ${fileName}`);
+              } catch (error) {
+                log.error("Failed to save file to database:", error);
+                this.history.unshift(item);
+                if (this.window) {
+                  this.window.webContents.send("clipboard-update", item);
+                }
+              }
+              return;
+            } else if (filePath) {
+              return;
+            }
+          }
+        }
+      } catch (error) {
+        log.error("Failed to read file from clipboard:", error);
+      }
+
+      // No file detected, now check for images
       const image = clipboard.readImage();
 
       if (!image.isEmpty()) {
@@ -91,9 +209,9 @@ export class ClipboardManager {
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
             }
+            log.info("Image saved");
           } catch (error) {
             log.error("Failed to save image to database:", error);
-            // Still add to memory even if DB fails
             this.history.unshift(item);
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
@@ -101,6 +219,7 @@ export class ClipboardManager {
           }
         }
       } else {
+        // No image, check for text
         const text = clipboard.readText();
         const trimmedText = text.trim();
 
@@ -121,7 +240,6 @@ export class ClipboardManager {
             embedding,
           };
 
-          // Save to database
           try {
             const id = this.db.addItem(item);
             item.id = id;
@@ -130,9 +248,9 @@ export class ClipboardManager {
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);
             }
+            log.info("Text saved");
           } catch (error) {
             log.error("Failed to save text to database:", error);
-            // Still add to memory even if DB fails
             this.history.unshift(item);
             if (this.window) {
               this.window.webContents.send("clipboard-update", item);

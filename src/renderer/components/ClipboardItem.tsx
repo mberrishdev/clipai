@@ -12,9 +12,11 @@ hljs.registerLanguage("json", json);
 
 interface ClipboardItemProps {
   item: {
-    type: "text" | "image";
+    type: "text" | "image" | "file";
     text?: string;
     image?: string;
+    filePath?: string;
+    fileName?: string;
     timestamp: number;
   };
   index: number;
@@ -103,6 +105,64 @@ export default function HistoryItemCard({
       }
     }
   };
+
+  const handleFileClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.filePath) {
+      try {
+        await window.electronAPI.openFileByPath(item.filePath);
+      } catch (error) {
+        console.error("Failed to open file:", error);
+      }
+    }
+  };
+
+  if (item.type === "file") {
+    return (
+      <div
+        className={`history-item ${isSelected ? 'history-item--selected' : ''}`}
+        data-index={index}
+        onClick={onSelect}
+      >
+        <div className="item-number">{index + 1}</div>
+        <div className="item-content">
+          <div className="item-header">
+            <span className="content-badge content-badge--file">file</span>
+            <div className="item-actions">
+              {showArchiveActions && (
+                <>
+                  <button
+                    className="action-btn action-btn--unarchive"
+                    onClick={onUnarchive}
+                    title="Restore to active"
+                  >
+                    Restore
+                  </button>
+                  <button
+                    className="action-btn action-btn--delete"
+                    onClick={onDelete}
+                    title="Delete permanently"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="file-preview" onClick={handleFileClick}>
+            <div className="file-icon">📄</div>
+            <div className="file-info">
+              <div className="file-name">{item.fileName}</div>
+              <div className="file-path">{item.filePath}</div>
+            </div>
+          </div>
+          <div className="item-timestamp">
+            {formatTimestamp(item.timestamp)}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (item.type === "image") {
     return (
