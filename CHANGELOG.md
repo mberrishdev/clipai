@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.9] – 2025-12-16
+
+### Added
+- File handling support: Clipboard manager and UI now handle file drops and file-type clipboard entries.
+- Image viewer: You can now open images directly from clipboard history.
+- Archive functionality: Archive clipboard items with retention period management and new UI for archived items.
+
+### Changed
+- Enhanced UI styles: Improved backdrop filters and shadows for better visibility and aesthetics.
+- Improved window behavior on macOS: Window now centers on the display where the shortcut is triggered and behaves more naturally with multiple monitors/spaces.
+
 ## [0.0.8] - 2024-12-15
 
 ### Added
